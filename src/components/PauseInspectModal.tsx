@@ -34,6 +34,7 @@ export default function PauseInspectModal({
   if (!isOpen || !productGroup) return null;
 
   const [showAllGroups, setShowAllGroups] = useState(false);
+  const [activePhotoIndices, setActivePhotoIndices] = useState<Record<string, number>>({});
 
   // Group navigation index
   const currentIndex = allGroups.findIndex((g) => g.id === productGroup.id);
@@ -207,72 +208,189 @@ export default function PauseInspectModal({
               No products attached to this moment in the video.
             </div>
           ) : (
-            productGroup.products.map((p) => (
-              <div
-                key={p.id}
-                style={{
-                  background: 'var(--bg-canvas)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '12px',
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'center',
-                }}
-              >
-                {p.imageUrl && (
-                  <img
-                    src={p.imageUrl}
-                    alt={p.title}
-                    style={{
-                      width: '68px',
-                      height: '68px',
-                      borderRadius: 'var(--radius-sm)',
-                      objectFit: 'cover',
-                      border: '1px solid var(--border-subtle)',
-                      background: '#000',
-                    }}
-                  />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.title}
-                    </h4>
-                  </div>
-                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 6px 0', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {p.description || '1-click checkout item'}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-                      ${p.price.toFixed(2)}
-                    </span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      {p.externalUrl && (
+            productGroup.products.map((p) => {
+              const images = Array.isArray(p.imageUrls) && p.imageUrls.length > 0
+                ? p.imageUrls
+                : (p.imageUrl ? [p.imageUrl] : []);
+              const currentPhotoIdx = activePhotoIndices[p.id] || 0;
+              const currentPhotoUrl = images[currentPhotoIdx] || images[0] || p.imageUrl || '';
+
+              return (
+                <div
+                  key={p.id}
+                  style={{
+                    background: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px',
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'center',
+                  }}
+                >
+                  {/* Product Image & Multi-photo controls */}
+                  {currentPhotoUrl && (
+                    <div style={{ position: 'relative', width: '74px', height: '74px', flexShrink: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#000', border: '1px solid var(--border-subtle)' }}>
+                      <img
+                        src={currentPhotoUrl}
+                        alt={p.title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'opacity 0.15s ease',
+                        }}
+                      />
+
+                      {/* Multi-Photo Indicator Badge */}
+                      {images.length > 1 && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '2px',
+                          right: '2px',
+                          background: 'rgba(0,0,0,0.75)',
+                          color: '#fff',
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          padding: '1px 4px',
+                          borderRadius: '2px',
+                          fontFamily: 'var(--font-mono)'
+                        }}>
+                          {currentPhotoIdx + 1}/{images.length}
+                        </div>
+                      )}
+
+                      {/* Mini Chevron Switchers */}
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActivePhotoIndices(prev => ({
+                                ...prev,
+                                [p.id]: currentPhotoIdx > 0 ? currentPhotoIdx - 1 : images.length - 1
+                              }));
+                            }}
+                            style={{
+                              position: 'absolute',
+                              left: '2px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              background: 'rgba(0,0,0,0.6)',
+                              border: 'none',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          >
+                            <ChevronLeft size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActivePhotoIndices(prev => ({
+                                ...prev,
+                                [p.id]: currentPhotoIdx < images.length - 1 ? currentPhotoIdx + 1 : 0
+                              }));
+                            }}
+                            style={{
+                              position: 'absolute',
+                              right: '2px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              background: 'rgba(0,0,0,0.6)',
+                              border: 'none',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          >
+                            <ChevronRight size={12} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.title}
+                      </h4>
+                    </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 4px 0', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {p.description || '1-click checkout item'}
+                    </p>
+
+                    {/* Micro Thumbnails Strip if multiple photos */}
+                    {images.length > 1 && (
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+                        {images.map((img, i) => (
+                          <div
+                            key={i}
+                            onClick={() => setActivePhotoIndices(prev => ({ ...prev, [p.id]: i }))}
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '2px',
+                              overflow: 'hidden',
+                              border: `1.5px solid ${i === currentPhotoIdx ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`,
+                              cursor: 'pointer',
+                              opacity: i === currentPhotoIdx ? 1 : 0.5,
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
+                        ${p.price.toFixed(2)}
+                      </span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {p.externalUrl && (
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            style={{ width: '28px', height: '28px', background: 'var(--bg-surface-elevated)' }}
+                            onClick={() => window.open(p.externalUrl, '_blank')}
+                            title="Open Store Link"
+                          >
+                            <ExternalLink size={12} />
+                          </button>
+                        )}
                         <button
                           type="button"
-                          className="icon-btn"
-                          style={{ width: '28px', height: '28px', background: 'var(--bg-surface-elevated)' }}
-                          onClick={() => window.open(p.externalUrl, '_blank')}
-                          title="Open Store Link"
+                          className="btn-checkout"
+                          style={{ width: 'auto', padding: '5px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => handleCheckout(p.id)}
                         >
-                          <ExternalLink size={12} />
+                          <CreditCard size={12} />
+                          <span>Buy Now</span>
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        className="btn-checkout"
-                        style={{ width: 'auto', padding: '5px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                        onClick={() => handleCheckout(p.id)}
-                      >
-                        <CreditCard size={12} />
-                        <span>Buy Now</span>
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

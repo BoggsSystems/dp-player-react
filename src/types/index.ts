@@ -15,6 +15,7 @@ export interface Product {
   currency?: string;
   description?: string;
   imageUrl?: string;
+  imageUrls?: string[];
   externalUrl?: string;
   stripePriceId?: string;
   variants?: ProductVariant[];

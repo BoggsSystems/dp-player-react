@@ -12,7 +12,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Plus,
-  Minus
+  Minus,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon
 } from 'lucide-react';
 import { ProductGroup, QuizQuestion } from '../types';
 import { api } from '../services/api';
@@ -31,6 +34,7 @@ export default function ShoppableDrawer({
   const [activeTab, setActiveTab] = useState<'buy' | 'details' | 'earn'>('buy');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [activeDetailPhotos, setActiveDetailPhotos] = useState<Record<string, number>>({});
 
   // Quiz state
   const [quizzes, setQuizzes] = useState<QuizQuestion[]>([]);
@@ -279,32 +283,149 @@ export default function ShoppableDrawer({
 
         {activeTab === 'details' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {productGroup.products.map((product) => (
-              <div
-                key={product.id}
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '16px',
-                }}
-              >
-                {product.imageUrl && (
-                  <img
-                    src={product.imageUrl}
-                    alt={product.title}
-                    style={{
-                      width: '100%',
-                      height: '160px',
-                      objectFit: 'cover',
-                      borderRadius: 'var(--radius-sm)',
-                      marginBottom: '12px',
-                    }}
-                  />
-                )}
-                <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                  {product.title}
-                </h4>
+            {productGroup.products.map((product) => {
+              const images = Array.isArray(product.imageUrls) && product.imageUrls.length > 0
+                ? product.imageUrls
+                : (product.imageUrl ? [product.imageUrl] : []);
+              const currentIdx = activeDetailPhotos[product.id] || 0;
+              const currentImg = images[currentIdx] || images[0] || product.imageUrl;
+
+              return (
+                <div
+                  key={product.id}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '16px',
+                  }}
+                >
+                  {currentImg && (
+                    <div style={{ position: 'relative', width: '100%', height: '170px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '10px', background: '#000' }}>
+                      <img
+                        src={currentImg}
+                        alt={product.title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'opacity 0.2s ease',
+                        }}
+                      />
+
+                      {/* Photo counter */}
+                      {images.length > 1 && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: 'rgba(0,0,0,0.75)',
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontFamily: 'var(--font-mono)'
+                        }}>
+                          <ImageIcon size={10} />
+                          <span>{currentIdx + 1}/{images.length}</span>
+                        </div>
+                      )}
+
+                      {/* Arrows */}
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDetailPhotos(prev => ({
+                                ...prev,
+                                [product.id]: currentIdx > 0 ? currentIdx - 1 : images.length - 1
+                              }));
+                            }}
+                            style={{
+                              position: 'absolute',
+                              left: '6px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: 'rgba(0,0,0,0.6)',
+                              border: 'none',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <ChevronLeft size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDetailPhotos(prev => ({
+                                ...prev,
+                                [product.id]: currentIdx < images.length - 1 ? currentIdx + 1 : 0
+                              }));
+                            }}
+                            style={{
+                              position: 'absolute',
+                              right: '6px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: 'rgba(0,0,0,0.6)',
+                              border: 'none',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <ChevronRight size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Micro Thumbnails row */}
+                  {images.length > 1 && (
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+                      {images.map((img, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setActiveDetailPhotos(prev => ({ ...prev, [product.id]: i }))}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '4px',
+                            overflow: 'hidden',
+                            border: `2px solid ${i === currentIdx ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`,
+                            cursor: 'pointer',
+                            opacity: i === currentIdx ? 1 : 0.6,
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    {product.title}
+                  </h4>
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '12px' }}>
                   {product.description || 'Featured product in interactive showcase.'}
                 </p>
@@ -330,7 +451,8 @@ export default function ShoppableDrawer({
                   </button>
                 )}
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
 

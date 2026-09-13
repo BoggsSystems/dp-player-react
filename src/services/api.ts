@@ -108,6 +108,11 @@ function getDemoProject(id: string): Project {
             currency: 'USD',
             description: 'The New Physics of Software Velocity by Jeffrey Boggs. Kindle & Paperback edition.',
             imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
+            imageUrls: [
+              'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
+              'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=400&q=80',
+              'https://images.unsplash.com/photo-1532012164546-f432f2e3edd4?auto=format&fit=crop&w=400&q=80',
+            ],
             externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
             stripePriceId: 'price_1TY6NwL8bMWhBHQJ_book',
           },
@@ -118,6 +123,11 @@ function getDemoProject(id: string): Project {
             currency: 'USD',
             description: '1-Click 10ms Profile Autofill Engine for ATS job applications.',
             imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+            imageUrls: [
+              'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80',
+              'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80',
+            ],
             externalUrl: 'https://app.opportunityos.com/checkout/pro',
             stripePriceId: 'price_1TY6NwL8bMWhBHQJ_pass',
           },
