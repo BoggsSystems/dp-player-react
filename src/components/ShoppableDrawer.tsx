@@ -13,26 +13,46 @@ import {
   AlertCircle,
   Plus,
   Minus,
+  Trash2,
   ChevronLeft,
   ChevronRight,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Compass,
+  Layers,
+  Zap
 } from 'lucide-react';
 import { ProductGroup, QuizQuestion } from '../types';
 import { api } from '../services/api';
+import { useCart } from '../context/CartContext';
 
 interface ShoppableDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   productGroup: ProductGroup | null;
+  onSeekAndPlay?: (seconds: number) => void;
+  onOpenAllGroups?: () => void;
 }
 
 export default function ShoppableDrawer({
   isOpen,
   onClose,
   productGroup,
+  onSeekAndPlay,
+  onOpenAllGroups,
 }: ShoppableDrawerProps) {
+  const {
+    items: cartItems,
+    addToCart,
+    addAllToCart,
+    removeFromCart,
+    updateQuantity,
+    totalCount,
+    subtotal,
+    bundleDiscount,
+    totalPrice,
+  } = useCart();
+
   const [activeTab, setActiveTab] = useState<'buy' | 'details' | 'earn'>('buy');
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [activeDetailPhotos, setActiveDetailPhotos] = useState<Record<string, number>>({});
 
@@ -43,16 +63,6 @@ export default function ShoppableDrawer({
   const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
 
   useEffect(() => {
-    if (productGroup) {
-      const initialQtys: Record<string, number> = {};
-      productGroup.products.forEach((p) => {
-        initialQtys[p.id] = 1;
-      });
-      setQuantities(initialQtys);
-    }
-  }, [productGroup]);
-
-  useEffect(() => {
     if (isOpen && activeTab === 'earn' && quizzes.length === 0) {
       api.getActiveQuizzes().then(setQuizzes);
     }
@@ -60,34 +70,18 @@ export default function ShoppableDrawer({
 
   if (!productGroup) return null;
 
-  const handleQtyChange = (id: string, delta: number) => {
-    setQuantities((prev) => {
-      const current = prev[id] || 1;
-      const next = Math.max(1, Math.min(10, current + delta));
-      return { ...prev, [id]: next };
-    });
-  };
-
-  const calculateSubtotal = () => {
-    return productGroup.products.reduce((acc, p) => {
-      const qty = quantities[p.id] || 1;
-      return acc + p.price * qty;
-    }, 0);
-  };
-
-  const discountPercent = productGroup.bundleDiscountPercent || 0;
-  const subtotal = calculateSubtotal();
-  const discountAmount = (subtotal * discountPercent) / 100;
-  const total = subtotal - discountAmount;
-
-  const handleCheckout = async () => {
+  const handleCartCheckout = async () => {
+    if (cartItems.length === 0) return;
     setIsCheckingOut(true);
     try {
-      const items = productGroup.products.map((p) => ({
-        id: p.id,
-        quantity: quantities[p.id] || 1,
+      const items = cartItems.map((item) => ({
+        id: item.product.id,
+        title: item.product.title,
+        price: item.product.price,
+        imageUrl: item.product.imageUrl || item.product.imageUrls?.[0],
+        quantity: item.quantity,
       }));
-      const { checkoutUrl } = await api.createCheckout(productGroup.id, items);
+      const { checkoutUrl } = await api.createCheckout('global_cart', items);
       if (checkoutUrl) {
         window.open(checkoutUrl, '_blank');
       }
@@ -118,19 +112,74 @@ export default function ShoppableDrawer({
       <div className="drawer-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShoppingBag size={18} color="var(--accent-cyan)" />
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {productGroup.name}
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {productGroup.title || productGroup.name || 'Shoppable Moment'}
           </h3>
         </div>
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={onClose}
-          aria-label="Close drawer"
-          style={{ width: '32px', height: '32px' }}
-        >
-          <X size={16} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onSeekAndPlay && (
+            <button
+              type="button"
+              onClick={() => {
+                onSeekAndPlay(productGroup.timestampSeconds);
+                onClose();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 10px',
+                background: 'rgba(20, 184, 166, 0.2)',
+                border: '1px solid var(--accent-teal, #14B8A6)',
+                borderRadius: '6px',
+                color: 'var(--accent-teal-light, #5EEAD4)',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+              title={`Seek video to @ ${productGroup.timestampSeconds.toFixed(1)}s and play`}
+            >
+              <Compass size={12} />
+              <span>Seek & Play</span>
+            </button>
+          )}
+
+          {onOpenAllGroups && (
+            <button
+              type="button"
+              onClick={() => {
+                onOpenAllGroups();
+                onClose();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '6px',
+                color: '#fff',
+                fontSize: '11px',
+                cursor: 'pointer',
+              }}
+              title="View all moments across the timeline"
+            >
+              <Layers size={12} />
+              <span>All</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={onClose}
+            aria-label="Close drawer"
+            style={{ width: '32px', height: '32px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -141,7 +190,7 @@ export default function ShoppableDrawer({
           onClick={() => setActiveTab('buy')}
         >
           <ShoppingBag size={13} />
-          <span>Basket</span>
+          <span>Bag {totalCount > 0 ? `(${totalCount})` : ''}</span>
         </button>
         <button
           type="button"
@@ -165,119 +214,166 @@ export default function ShoppableDrawer({
       <div className="drawer-body">
         {activeTab === 'buy' && (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {productGroup.products.map((product) => {
-                const qty = quantities[product.id] || 1;
-                return (
-                  <div key={product.id} className="product-card">
-                    {product.imageUrl ? (
-                      <img
-                        src={product.imageUrl}
-                        alt={product.title}
-                        className="product-thumb"
-                      />
-                    ) : (
-                      <div
-                        className="product-thumb"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--text-muted)',
-                        }}
-                      >
-                        <ShoppingBag size={24} />
-                      </div>
-                    )}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {product.title}
-                        </div>
-                        <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-emerald)', marginTop: '2px' }}>
-                          ${product.price.toFixed(2)}
-                        </div>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          style={{ width: '24px', height: '24px', background: 'var(--bg-surface-elevated)' }}
-                          onClick={() => handleQtyChange(product.id, -1)}
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-                          {qty}
-                        </span>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          style={{ width: '24px', height: '24px', background: 'var(--bg-surface-elevated)' }}
-                          onClick={() => handleQtyChange(product.id, 1)}
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Price Summary */}
-            <div
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                padding: '16px',
-                marginTop: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                <span>Subtotal</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>${subtotal.toFixed(2)}</span>
-              </div>
-
-              {discountPercent > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)' }}>
-                  <span>Bundle Discount ({discountPercent}%)</span>
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>-${discountAmount.toFixed(2)}</span>
+            {cartItems.length === 0 ? (
+              <div className="cart-empty-state">
+                <div className="cart-empty-icon">
+                  <ShoppingBag size={42} strokeWidth={1.5} color="var(--text-muted)" />
                 </div>
-              )}
-
-              <div
-                style={{
-                  height: '1px',
-                  background: 'var(--border-subtle)',
-                  margin: '4px 0',
-                }}
-              />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                <span>Total</span>
-                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-emerald)' }}>
-                  ${total.toFixed(2)}
-                </span>
+                <h4 className="cart-empty-title">Your Bag is Empty</h4>
+                <p className="cart-empty-subtitle">
+                  Tap or click any product in the video stream to inspect and add items to your global shopping bag.
+                </p>
+                {productGroup && productGroup.products.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn-add-collection-to-empty-cart"
+                    onClick={() => addAllToCart(productGroup.products, productGroup.id, productGroup.title || productGroup.name)}
+                  >
+                    <Zap size={14} color="var(--accent-amber)" />
+                    <span>+ Add Current Moment ({productGroup.products.length} Items)</span>
+                  </button>
+                )}
               </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {cartItems.map((item) => {
+                    const displayImg = item.product.imageUrl || item.product.imageUrls?.[0];
+                    return (
+                      <div key={item.product.id} className="product-card">
+                        {displayImg ? (
+                          <img
+                            src={displayImg}
+                            alt={item.product.title}
+                            className="product-thumb"
+                          />
+                        ) : (
+                          <div
+                            className="product-thumb"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--text-muted)',
+                            }}
+                          >
+                            <ShoppingBag size={24} />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
+                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                                {item.product.title}
+                              </div>
+                              <button
+                                type="button"
+                                className="btn-remove-item"
+                                onClick={() => removeFromCart(item.product.id)}
+                                title="Remove from bag"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
 
-              <button
-                type="button"
-                className="btn-checkout"
-                onClick={handleCheckout}
-                disabled={isCheckingOut}
-                style={{ marginTop: '8px' }}
-              >
-                <CreditCard size={16} />
-                <span>{isCheckingOut ? 'Opening Checkout...' : '1-Click Stripe Checkout'}</span>
-              </button>
-            </div>
+                            {item.groupTitle && (
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                From: {item.groupTitle}
+                              </div>
+                            )}
+
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-emerald)', marginTop: '4px' }}>
+                              ${item.product.price.toFixed(2)}
+                            </div>
+                          </div>
+
+                          {/* Quantity Controls & Line Total */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                style={{ width: '24px', height: '24px', background: 'var(--bg-surface-elevated)' }}
+                                onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'var(--font-mono)', minWidth: '16px', textAlign: 'center' }}>
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                style={{ width: '24px', height: '24px', background: 'var(--bg-surface-elevated)' }}
+                                onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+
+                            <span style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                              ${(item.product.price * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Price Summary */}
+                <div
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '16px',
+                    marginTop: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    <span>Subtotal ({totalCount} {totalCount === 1 ? 'item' : 'items'})</span>
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>${subtotal.toFixed(2)}</span>
+                  </div>
+
+                  {bundleDiscount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)' }}>
+                      <span>Bundle Discount (15%)</span>
+                      <span style={{ fontFamily: 'var(--font-mono)' }}>-${bundleDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      height: '1px',
+                      background: 'var(--border-subtle)',
+                      margin: '4px 0',
+                    }}
+                  />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <span>Total</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-emerald)' }}>
+                      ${totalPrice.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-checkout"
+                    onClick={handleCartCheckout}
+                    disabled={isCheckingOut}
+                    style={{ marginTop: '8px' }}
+                  >
+                    <CreditCard size={16} />
+                    <span>{isCheckingOut ? 'Opening Checkout...' : 'CHECKOUT WITH STRIPE'}</span>
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
 
@@ -430,7 +526,7 @@ export default function ShoppableDrawer({
                   {product.description || 'Featured product in interactive showcase.'}
                 </p>
 
-                {product.externalUrl && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                   <button
                     type="button"
                     className="icon-btn"
@@ -438,18 +534,44 @@ export default function ShoppableDrawer({
                       width: 'auto',
                       borderRadius: 'var(--radius-sm)',
                       padding: '6px 12px',
-                      background: 'var(--bg-surface-elevated)',
+                      background: 'var(--accent-emerald)',
+                      color: '#ffffff',
                       fontSize: '12px',
+                      fontWeight: 600,
                       display: 'inline-flex',
+                      alignItems: 'center',
                       gap: '6px',
-                      color: 'var(--accent-cyan)',
+                      border: 'none',
+                      cursor: 'pointer',
                     }}
-                    onClick={() => window.open(product.externalUrl, '_blank')}
+                    onClick={() => addToCart(product, productGroup.id, productGroup.title || productGroup.name, 1)}
                   >
-                    <ExternalLink size={12} />
-                    <span>View Official Store</span>
+                    <ShoppingBag size={13} />
+                    <span>+ Add to Bag</span>
                   </button>
-                )}
+
+                  {product.externalUrl && (
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      style={{
+                        width: 'auto',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '6px 12px',
+                        background: 'var(--bg-surface-elevated)',
+                        fontSize: '12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: 'var(--accent-cyan)',
+                      }}
+                      onClick={() => window.open(product.externalUrl, '_blank')}
+                    >
+                      <ExternalLink size={12} />
+                      <span>View Official Store</span>
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

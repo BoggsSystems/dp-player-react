@@ -4,14 +4,29 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:9000').r
 
 export const api = {
   async getProject(id: string): Promise<Project> {
+    // 1. Check Studio's active or saved projects in localStorage first
+    try {
+      const studioProjectsRaw = localStorage.getItem('digitpop_studio_projects');
+      if (studioProjectsRaw) {
+        const studioProjects: Project[] = JSON.parse(studioProjectsRaw);
+        const match = studioProjects.find((p) => p.id === id);
+        if (match) return match;
+      }
+      const activeProjectRaw = localStorage.getItem('digitpop_studio_project');
+      if (activeProjectRaw) {
+        const activeProject: Project = JSON.parse(activeProjectRaw);
+        if (activeProject.id === id) return activeProject;
+      }
+    } catch (e) {}
+
+    // 2. Fetch from backend if available
     try {
       const res = await fetch(`${API_BASE_URL}/api/projects/${id}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } catch (e) {
-      console.warn(`[PlayerAPI] Project ${id} not found on server, using fallback/seed demo.`);
-      return getDemoProject(id);
-    }
+      if (res.ok) return await res.json();
+    } catch (e) {}
+
+    console.warn(`[PlayerAPI] Project ${id} not found on server or localStorage, using rich demo presentation.`);
+    return getDemoProject(id);
   },
 
   async getActiveQuizzes(): Promise<QuizQuestion[]> {
@@ -54,15 +69,28 @@ export const api = {
     }
   },
 
-  async createCheckout(basketId: string, items: Array<{ id: string; quantity: number }>): Promise<{ checkoutUrl: string }> {
+  async createCheckout(
+    basketOrGroupId: string,
+    items: Array<{ id: string; title: string; price: number; imageUrl?: string; quantity: number }>,
+    projectId?: string
+  ): Promise<{ checkoutUrl: string; sessionId?: string }> {
     try {
       const res = await fetch(`${API_BASE_URL}/api/stripe/create-basket-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basketId, selectedItems: items }),
+        body: JSON.stringify({
+          basketId: basketOrGroupId,
+          selectedItems: items,
+          items,
+          projectId,
+        }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const data = await res.json();
+      return {
+        checkoutUrl: data.checkoutUrl || data.checkoutSession?.checkoutUrl || data.url || 'https://checkout.stripe.com/pay/cs_test_simulated_digitpop',
+        sessionId: data.sessionId || data.checkoutSession?.id,
+      };
     } catch (e) {
       console.warn('[PlayerAPI] Stripe backend simulated checkout link.');
       return { checkoutUrl: 'https://checkout.stripe.com/pay/cs_test_simulated_digitpop' };
@@ -82,57 +110,121 @@ export const api = {
   },
 };
 
+export const TEST_BAVARIA_PROJECT: Project = {
+  id: 'proj_bavaria_luxury_001',
+  name: 'Bavaria Alpine Luxury & Lifestyle Showcase',
+  description: 'Interactive 4K alpine lifestyle showcase with 1 product group featuring 6 handcrafted luxury products.',
+  masterVodUrl: '/videos/test_showcase.mp4',
+  durationSeconds: 24.0,
+  productGroups: [
+    {
+      id: 'pg_alpine_luxury',
+      title: 'Alpine Winter Essentials & Luxury Collection',
+      name: 'Alpine Winter Essentials & Luxury Collection',
+      subtitle: 'Curated 6-piece luxury ensemble for the Bavarian Alps',
+      description: 'Handcrafted full-grain leather, Swiss mechanical horology, fine merino wool, and mountain lifestyle essentials.',
+      timestampSeconds: 3.5,
+      endTimestampSeconds: 24.0,
+      viewingMode: 'PAUSE_INSPECT',
+      hotspotX: 68,
+      hotspotY: 38,
+      bundleDiscountPercent: 15,
+      products: [
+        {
+          id: 'prod_bav_duffle',
+          title: 'Bavarian Full-Grain Leather Duffle',
+          price: 349.00,
+          currency: 'USD',
+          description: 'Vegetable-tanned Bavarian cowhide with solid brass YKK zippers and reinforced waterproof lining.',
+          imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80',
+          imageUrls: [
+            'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1547949003-9792a18a2601?w=600&auto=format&fit=crop&q=80',
+          ],
+          externalUrl: 'https://shop.example.com/bavarian-duffle',
+          stripePriceId: 'price_bav_duffle',
+        },
+        {
+          id: 'prod_bav_watch',
+          title: 'Chronos Obsidian Automatic Watch',
+          price: 289.00,
+          currency: 'USD',
+          description: 'Automatic self-winding Swiss mechanical movement with sapphire crystal and 100m water resistance.',
+          imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
+          imageUrls: [
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop&q=80',
+          ],
+          externalUrl: 'https://shop.example.com/chronos-watch',
+          stripePriceId: 'price_bav_watch',
+        },
+        {
+          id: 'prod_bav_sweater',
+          title: 'Thermal Merino Wool Alpine Crew',
+          price: 125.00,
+          currency: 'USD',
+          description: '100% ultrafine New Zealand Merino wool with breathable ribbed cuffs and odor-resistant weave.',
+          imageUrl: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=600&auto=format&fit=crop&q=80',
+          imageUrls: [
+            'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&auto=format&fit=crop&q=80',
+          ],
+          externalUrl: 'https://shop.example.com/merino-sweater',
+          stripePriceId: 'price_bav_sweater',
+        },
+        {
+          id: 'prod_bav_shades',
+          title: 'Alpine Glacier Polarized Sunglasses',
+          price: 165.00,
+          currency: 'USD',
+          description: 'Ultralight aerospace titanium frame with category-3 polarized anti-glare lenses for high altitude.',
+          imageUrl: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format&fit=crop&q=80',
+          imageUrls: [
+            'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1508296695146-257a814070b4?w=600&auto=format&fit=crop&q=80',
+          ],
+          externalUrl: 'https://shop.example.com/glacier-shades',
+          stripePriceId: 'price_bav_shades',
+        },
+        {
+          id: 'prod_bav_flask',
+          title: 'Ceramic-Lined Alpine Thermal Flask',
+          price: 48.00,
+          currency: 'USD',
+          description: 'Double-wall vacuum insulation keeps liquids steaming hot for 24 hours. Pure ceramic interior lining.',
+          imageUrl: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80',
+          imageUrls: [
+            'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=600&auto=format&fit=crop&q=80',
+          ],
+          externalUrl: 'https://shop.example.com/thermal-flask',
+          stripePriceId: 'price_bav_flask',
+        },
+        {
+          id: 'prod_bav_boots',
+          title: 'Vibram-Sole Trailblazer Mountain Boots',
+          price: 240.00,
+          currency: 'USD',
+          description: 'Gore-Tex breathable waterproof membrane paired with Vibram Megagrip lugged outsoles for alpine mountain terrain.',
+          imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
+          imageUrls: [
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
+            'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&auto=format&fit=crop&q=80',
+          ],
+          externalUrl: 'https://shop.example.com/trailblazer-boots',
+          stripePriceId: 'price_bav_boots',
+        },
+      ],
+    },
+  ],
+};
+
 function getDemoProject(id: string): Project {
+  if (!id || id === 'proj_bavaria_luxury_001' || id === 'test' || id === 'demo_6_products') {
+    return TEST_BAVARIA_PROJECT;
+  }
   return {
-    id: id || 'demo-project-1',
-    name: 'AI-Native Livestream & Shoppable Showcase',
-    description: 'Interactive demonstration with Cloudflare R2 VOD, live overlays, and 1-click Stripe checkout.',
-    masterVodUrl: 'https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev/vods/demo_presentation.mp4',
-    hlsManifestUrl: 'http://localhost:8080/live/jeff_speedrun.m3u8',
-    durationSeconds: 120,
-    productGroups: [
-      {
-        id: 'pg_1',
-        name: 'AI-Native Physics Collection',
-        timestampSeconds: 5,
-        endTimestampSeconds: 45,
-        viewingMode: 'SIDE_PANEL',
-        hotspotX: 75,
-        hotspotY: 35,
-        bundleDiscountPercent: 15,
-        products: [
-          {
-            id: 'prod_book_1',
-            title: 'AI-Native Software Engineering',
-            price: 9.99,
-            currency: 'USD',
-            description: 'The New Physics of Software Velocity by Jeffrey Boggs. Kindle & Paperback edition.',
-            imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
-            imageUrls: [
-              'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
-              'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=400&q=80',
-              'https://images.unsplash.com/photo-1532012164546-f432f2e3edd4?auto=format&fit=crop&w=400&q=80',
-            ],
-            externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
-            stripePriceId: 'price_1TY6NwL8bMWhBHQJ_book',
-          },
-          {
-            id: 'prod_pass_1',
-            title: 'Opportunity OS Pro Pass',
-            price: 49.00,
-            currency: 'USD',
-            description: '1-Click 10ms Profile Autofill Engine for ATS job applications.',
-            imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
-            imageUrls: [
-              'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
-              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80',
-              'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80',
-            ],
-            externalUrl: 'https://app.opportunityos.com/checkout/pro',
-            stripePriceId: 'price_1TY6NwL8bMWhBHQJ_pass',
-          },
-        ],
-      },
-    ],
+    ...TEST_BAVARIA_PROJECT,
+    id,
   };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 interface VideoSurfaceProps {
   src?: string;
@@ -33,9 +33,6 @@ export default function VideoSurface({
   const [isMuted, setIsMuted] = useState(muted);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef<any>(null);
 
   // Sync external isPaused prop
   useEffect(() => {
@@ -49,6 +46,15 @@ export default function VideoSurface({
       setIsPlaying(true);
     }
   }, [isPaused]);
+
+  // Sync external muted prop
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && muted !== undefined) {
+      video.muted = muted;
+      setIsMuted(muted);
+    }
+  }, [muted]);
 
   // Sync external seekTime prop
   useEffect(() => {
@@ -162,49 +168,6 @@ export default function VideoSurface({
     }
   };
 
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    const nextMuted = !videoRef.current.muted;
-    videoRef.current.muted = nextMuted;
-    setIsMuted(nextMuted);
-  };
-
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen().catch(() => {});
-      setIsFullscreen(false);
-    }
-  };
-
-  const handleScrubberClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isLive || !videoRef.current || duration <= 0) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickRatio = (e.clientX - rect.left) / rect.width;
-    const newTime = clickRatio * duration;
-    videoRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
-  };
-
-  const handleMouseMove = () => {
-    setShowControls(true);
-    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) {
-        setShowControls(false);
-      }
-    }, 3000);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
   const handleSurfaceClick = () => {
     if (onSurfaceTap) {
       onSurfaceTap();
@@ -217,7 +180,6 @@ export default function VideoSurface({
     <div
       ref={containerRef}
       className="player-container"
-      onMouseMove={handleMouseMove}
       onClick={handleSurfaceClick}
     >
       <video
@@ -255,67 +217,7 @@ export default function VideoSurface({
         </button>
       )}
 
-      {/* Controls Overlay */}
-      <div
-        className={`controls-overlay ${showControls ? '' : 'hidden'}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Scrubber (only in VOD mode) */}
-        {!isLive && duration > 0 && (
-          <div className="scrubber-track" onClick={handleScrubberClick}>
-            <div
-              className="scrubber-fill"
-              style={{ width: `${(currentTime / duration) * 100}%` }}
-            >
-              <div className="scrubber-thumb" />
-            </div>
-          </div>
-        )}
 
-        {/* Control Buttons Row */}
-        <div className="controls-row">
-          <div className="controls-group">
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={togglePlay}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-            </button>
-
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={toggleMute}
-              aria-label={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted ? <VolumeX size={18} color="var(--accent-red)" /> : <Volume2 size={18} />}
-            </button>
-
-            {!isLive ? (
-              <span className="time-readout">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-            ) : (
-              <span className="time-readout" style={{ color: 'var(--accent-emerald)' }}>
-                ● Synchronized Stream
-              </span>
-            )}
-          </div>
-
-          <div className="controls-group">
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            >
-              {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

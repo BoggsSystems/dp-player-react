@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+	<style>
+	<![CDATA[
+		#circle {
+			animation: circle-animation 1500ms linear infinite normal forwards
+		}
+		
+		@keyframes circle-animation {
+			0% {r: 65.5px; }
+			26.7% {r: 65.5px; stroke-opacity: 0%; stroke-width: 1; }
+			40.0% { stroke-opacity: 100% }
+			73.4% { stroke-opacity: 100% }
+			93.4% { r: 120px; stroke-opacity: 0%; stroke-width: 42; }
+			100% { r: 120px; }
+		}
+	]]>
+	</style>
+
+	<path d="m185.801,121.233l2.219,59.685c.262,7.04-5.375,12.89-12.42,12.89h-51.094c-7.045,0-12.682-5.85-12.42-12.89l2.219-59.685h71.497Z" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.376"/>
+	<path d="m132.381,134.611v-18.639c0-9.76,7.912-17.672,17.672-17.672s17.672,7.912,17.672,17.672v18.639" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.376"/>
+	<circle id="circle" r="65.5" transform="translate(150.81459 150)" fill="none" stroke="#fff" stroke-opacity="0" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+</svg>

@@ -1,22 +1,49 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ShoppingBag } from 'lucide-react';
 import VideoSurface from './components/VideoSurface';
 import LiveBadge from './components/LiveBadge';
-import HotspotLayer from './components/HotspotLayer';
 import ShoppableDrawer from './components/ShoppableDrawer';
 import PauseInspectModal from './components/PauseInspectModal';
+import AllGroupsModal from './components/AllGroupsModal';
+import LiveShoppableRail from './components/LiveShoppableRail';
 import { useWebSocketStream } from './hooks/useWebSocketStream';
-import { Project, ProductGroup, ViewingMode } from './types';
+import { Project, ProductGroup, ViewingMode, Product } from './types';
 import { api } from './services/api';
+import { CartProvider, useCart } from './context/CartContext';
 
-export default function App() {
+function Player() {
+  const { totalCount } = useCart();
   const [project, setProject] = useState<Project | null>(null);
   const [activeGroup, setActiveGroup] = useState<ProductGroup | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isInspectOpen, setIsInspectOpen] = useState(false);
+  const [inspectProduct, setInspectProduct] = useState<Product | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
   const [isPaused, setIsPaused] = useState(false);
   const [seekTime, setSeekTime] = useState<number | null>(null);
+  const [isAllGroupsOpen, setIsAllGroupsOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // View Mode: IMMERSIVE vs SPLIT_PANEL (Co-Pilot Side-by-Side)
+  const [viewMode, setViewMode] = useState<'IMMERSIVE' | 'SPLIT_PANEL'>(() => {
+    try {
+      const stored = localStorage.getItem('dp_view_mode');
+      if (stored === 'SPLIT_PANEL' || stored === 'IMMERSIVE') {
+        return stored;
+      }
+    } catch {}
+    return 'SPLIT_PANEL';
+  });
+
+  const handleModeChange = (mode: 'IMMERSIVE' | 'SPLIT_PANEL') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('dp_view_mode', mode);
+    } catch (err) {
+      console.warn('Failed to save view mode to localStorage', err);
+    }
+  };
 
   // Parse path & search query
   const queryParams = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -125,6 +152,7 @@ export default function App() {
       setIsDrawerOpen((prev) => !prev);
     } else {
       // PAUSE_INSPECT: Signature pause and open catalog overlay
+      setInspectProduct(null);
       setIsPaused(true);
       setIsInspectOpen(true);
     }
@@ -132,14 +160,28 @@ export default function App() {
 
   const handleResumeFromInspect = () => {
     setIsInspectOpen(false);
+    setInspectProduct(null);
     setIsPaused(false);
+  };
+
+  const handleInspectProduct = (product: Product) => {
+    setInspectProduct(product);
+    setIsPaused(true);
+    setIsInspectOpen(true);
   };
 
   const handleSeekAndPlay = (seconds: number) => {
     setSeekTime(seconds);
     setIsInspectOpen(false);
+    setInspectProduct(null);
+    setIsAllGroupsOpen(false);
+    setIsDrawerOpen(false);
     setIsPaused(false);
     setTimeout(() => setSeekTime(null), 100);
+  };
+
+  const toggleMute = () => {
+    setIsMuted((prev) => !prev);
   };
 
   // Determine media source URL
@@ -148,54 +190,155 @@ export default function App() {
       return `http://${window.location.hostname || 'localhost'}:8080/live/${streamKey}.m3u8`;
     }
     return (
-      project?.hlsManifestUrl ||
       project?.masterVodUrl ||
+      project?.hlsManifestUrl ||
       'https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev/vods/demo_presentation.mp4'
     );
   }, [isLive, streamKey, project]);
 
   return (
     <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000' }}>
-      {/* Live Badge */}
-      {isLive && <LiveBadge />}
+      {/* Main Player Surface */}
+      {viewMode === 'SPLIT_PANEL' ? (
+        <div className="player-split-layout">
+          {/* Left Split: Video Surface */}
+          <div className="split-video-pane">
+            {isLive && <LiveBadge />}
+            <VideoSurface
+              src={videoSourceUrl}
+              isLive={isLive}
+              autoplay
+              muted={isMuted}
+              onTimeUpdate={handleTimeUpdate}
+              onSurfaceTap={handleSurfaceTap}
+              isPaused={isPaused}
+              seekTime={seekTime}
+            />
 
-      {/* Core Video Player with Signature Full-Surface Tap */}
-      <VideoSurface
-        src={videoSourceUrl}
-        isLive={isLive}
-        autoplay
-        onTimeUpdate={handleTimeUpdate}
-        onSurfaceTap={handleSurfaceTap}
-        isPaused={isPaused}
-        seekTime={seekTime}
-      />
+            {!isPaused && !isInspectOpen && !isAllGroupsOpen && !isDrawerOpen && (
+              <div
+                className="shoppable-video-tutorial-container"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSurfaceTap();
+                }}
+                title="Click on product for more details"
+              >
+                <div className="shoppable-tooltip">Click on product for more details</div>
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <img
+                    src="/assets/images/shoppable-video-touch.svg"
+                    alt="Shoppable Video"
+                    className="shoppable-video-tutorial"
+                  />
+                  {totalCount > 0 && (
+                    <span className="cart-badge">{totalCount}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
-      {/* Hotspots & Overlays */}
-      <HotspotLayer
-        productGroup={activeGroup}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
-        onOpenInspect={() => {
-          setIsPaused(true);
-          setIsInspectOpen(true);
-        }}
-      />
+          {/* Right Split: Live Shoppable Rail */}
+          <LiveShoppableRail
+            productGroup={activeGroup}
+            allGroups={project?.productGroups || []}
+            onInspectProduct={handleInspectProduct}
+            onOpenAllGroups={() => setIsAllGroupsOpen(true)}
+            onCollapseRail={() => handleModeChange('IMMERSIVE')}
+          />
+        </div>
+      ) : (
+        <div className="player-immersive-layout" style={{ position: 'relative', width: '100%', height: '100%' }}>
+          {isLive && <LiveBadge />}
+          <button
+            type="button"
+            className="btn-float-shop"
+            onClick={() => handleModeChange('SPLIT_PANEL')}
+            title="Open Co-Pilot Shopping Rail"
+          >
+            <ShoppingBag size={15} />
+            <span>Shop</span>
+          </button>
+          <VideoSurface
+            src={videoSourceUrl}
+            isLive={isLive}
+            autoplay
+            muted={isMuted}
+            onTimeUpdate={handleTimeUpdate}
+            onSurfaceTap={handleSurfaceTap}
+            isPaused={isPaused}
+            seekTime={seekTime}
+          />
+          {!isPaused && !isInspectOpen && !isAllGroupsOpen && !isDrawerOpen && (
+            <div
+              className="shoppable-video-tutorial-container"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSurfaceTap();
+              }}
+              title="Click on product for more details"
+            >
+              <div className="shoppable-tooltip">Click on product for more details</div>
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <img
+                  src="/assets/images/shoppable-video-touch.svg"
+                  alt="Shoppable Video"
+                  className="shoppable-video-tutorial"
+                />
+                {totalCount > 0 && (
+                  <span className="cart-badge">{totalCount}</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Shoppable Slide-out Drawer */}
       <ShoppableDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         productGroup={activeGroup}
+        onSeekAndPlay={handleSeekAndPlay}
+        onOpenAllGroups={() => setIsAllGroupsOpen(true)}
       />
 
       {/* Deep Inspection Modal with Full Catalog Navigation */}
       <PauseInspectModal
         isOpen={isInspectOpen}
         onResume={handleResumeFromInspect}
+        onResumeToSplit={() => {
+          handleModeChange('SPLIT_PANEL');
+          handleResumeFromInspect();
+        }}
         productGroup={activeGroup}
         allGroups={project?.productGroups || []}
+        initialProduct={inspectProduct}
         onSelectGroup={(g) => setActiveGroup(g)}
         onSeekAndPlay={handleSeekAndPlay}
+        onOpenAllGroups={() => setIsAllGroupsOpen(true)}
+        isMuted={isMuted}
+        onToggleMute={toggleMute}
+      />
+
+      {/* Established DigitPop All Groups Timeline Catalog Modal */}
+      <AllGroupsModal
+        isOpen={isAllGroupsOpen}
+        onClose={() => setIsAllGroupsOpen(false)}
+        allGroups={project?.productGroups || []}
+        activeGroupId={activeGroup?.id}
+        onSeekAndPlay={handleSeekAndPlay}
+        onSelectGroup={(g) => setActiveGroup(g)}
       />
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <Player />
+    </CartProvider>
   );
 }

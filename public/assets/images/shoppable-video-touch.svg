@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+	<style>
+    <![CDATA[
+    #finger {
+      animation: finger-animation 3000ms linear infinite normal forwards
+    }
+
+    @keyframes finger-animation {
+      0% {
+        transform: translate(162.341743px, 173.617744px)
+      }
+      13.4% {
+        transform: translate(171.057708px, 182.333717px)
+      }
+      46.7% {
+        transform: translate(162.341743px, 173.617744px)
+      }
+      100% {
+        transform: translate(162.341743px, 173.617744px)
+      }
+    }
+
+    #circle {
+      animation: circle-animation 1500ms linear infinite normal forwards
+    }
+
+    @keyframes circle-animation {
+      0% {
+        r: 65.5px;
+      }
+      26.7% {
+        r: 65.5px;
+        stroke-opacity: 0%;
+        stroke-width: 1;
+      }
+      40.0% {
+        stroke-opacity: 100%
+      }
+      73.4% {
+        stroke-opacity: 100%
+      }
+      93.4% {
+        r: 120px;
+        stroke-opacity: 0%;
+        stroke-width: 42;
+      }
+      100% {
+        r: 120px;
+      }
+    }
+    ]]>
+	</style>
+
+  <g>
+    <path
+      d="m148.842,193.809h-24.389c-7.045,0-12.682-5.85-12.42-12.89l2.219-59.685h71.497s.881,23.691.881,23.691"
+      fill="none"
+      stroke="#fff"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="6.376"/>
+    <path
+      d="m132.328,134.611v-18.639c0-9.76,7.912-17.672,17.672-17.672s17.672,7.912,17.672,17.672v18.639"
+      fill="none"
+      stroke="#fff"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="6.376"/>
+
+    <g id="finger" transform="translate(162.341743,173.617744)">
+      <path
+        d="M173.243,188.898l-20.744-20.744c-2.246-2.246-2.246-5.886,0-8.132s5.886-2.246,8.132,0l13.238,13.238"
+        transform="translate(-162.341743,-173.617744)"
+        fill="none" stroke="#fff"
+        stroke-width="6.376"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    </g>
+
+    <path
+      d="M173.869,173.26l8.968,8.968"
+      fill="none"
+      stroke="#fff"
+      stroke-width="6.376"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+    <path
+      d="M182.211,197.866l-8.968-8.968"
+      fill="none"
+      stroke="#fff"
+      stroke-width="6.376"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+    <path
+      d="M176.894,176.285c-2.246-2.246-2.246-5.886,0-8.132s5.886-2.246,8.132,0l7.506,7.506"
+      fill="none"
+      stroke="#fff"
+      stroke-width="6.376"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+    <path
+      d="M186.589,169.717c-2.246-2.246-2.246-5.886,0-8.132s5.886-2.246,8.132,0l8.132,8.132"
+      fill="none"
+      stroke="#fff"
+      stroke-width="6.376"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+    <path
+      d="M176.581,192.236c-2.246-2.246-5.886-2.246-8.132,0s-2.246,5.886,0,8.132l13.761,13.761c11.228,11.228,29.431,11.228,40.659,0s11.228-29.431,0-40.659l-18.14-18.14c-2.246-2.246-5.886-2.246-8.132,0s-2.246,5.886,0,8.132"
+      fill="none"
+      stroke="#fff"
+      stroke-width="6.376"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+  </g>
+
+  <g clip-path="url(#mask)">
+    <circle
+      id="circle"
+      r="65.5"
+      transform="translate(150.81459 150)"
+      fill="none"
+      stroke="#fff"
+      stroke-opacity="0"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1"/>
+
+    <clipPath id="mask">
+      <path
+        d="M0.658,0v300h300v-300h-300ZM235.256,226.856c-9.114,9.114-21.086,13.671-33.057,13.671s-23.943-4.557-33.058-13.671l-13.761-13.76c-4.487-4.488-6.957-10.452-6.957-16.795c0-1.958.237-3.878.694-5.731l-9.689-9.689c-9.258-9.259-9.259-24.325-.003-33.586c9.264-9.26,24.33-9.262,33.589-.004l1.048,1.048c2.628-2.471,5.723-4.28,9.085-5.339.126-.132.249-.268.378-.397c9.263-9.26,24.328-9.261,33.588-.003l18.142,18.143c18.228,18.228,18.228,47.886,0,66.113v0Z"
+        fill="none"/>
+    </clipPath>
+  </g>
+</svg>

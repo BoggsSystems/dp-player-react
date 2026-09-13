@@ -1,40 +1,78 @@
-import React, { useState } from 'react';
-import { 
-  Play, 
-  ShoppingBag, 
-  CreditCard, 
-  ExternalLink, 
-  X, 
-  ChevronLeft, 
-  ChevronRight, 
-  Compass, 
-  Layers,
-  Sparkles
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns } from 'lucide-react';
 import { ProductGroup, Product } from '../types';
 import { api } from '../services/api';
+import { useCart } from '../context/CartContext';
 
 interface PauseInspectModalProps {
   isOpen: boolean;
   onResume: () => void;
+  onResumeToSplit?: () => void;
   productGroup: ProductGroup | null;
   allGroups?: ProductGroup[];
+  initialProduct?: Product | null;
   onSelectGroup?: (group: ProductGroup) => void;
   onSeekAndPlay?: (seconds: number) => void;
+  onOpenAllGroups?: () => void;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 }
+
+type ViewState = 'ProductGroup' | 'Product' | 'AllProductGroups' | 'Cart';
 
 export default function PauseInspectModal({
   isOpen,
   onResume,
+  onResumeToSplit,
   productGroup,
   allGroups = [],
+  initialProduct = null,
   onSelectGroup,
   onSeekAndPlay,
+  onOpenAllGroups,
+  isMuted = false,
+  onToggleMute,
 }: PauseInspectModalProps) {
   if (!isOpen || !productGroup) return null;
 
-  const [showAllGroups, setShowAllGroups] = useState(false);
-  const [activePhotoIndices, setActivePhotoIndices] = useState<Record<string, number>>({});
+  const {
+    items,
+    totalCount,
+    subtotal,
+    bundleDiscount,
+    totalPrice,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    addToCart,
+    addAllToCart,
+  } = useCart();
+  const [viewState, setViewState] = useState<ViewState>(initialProduct ? 'Product' : 'ProductGroup');
+  const [previousViewState, setPreviousViewState] = useState<ViewState>('ProductGroup');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(initialProduct);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2400);
+  };
+
+  // Reset to group or initialProduct view when productGroup or initialProduct changes
+  useEffect(() => {
+    if (initialProduct) {
+      setSelectedProduct(initialProduct);
+      setViewState('Product');
+    } else {
+      setViewState('ProductGroup');
+      setSelectedProduct(null);
+    }
+    setPreviousViewState('ProductGroup');
+    setSelectedImageIndex(0);
+  }, [productGroup.id, initialProduct]);
 
   // Group navigation index
   const currentIndex = allGroups.findIndex((g) => g.id === productGroup.id);
@@ -44,12 +82,14 @@ export default function PauseInspectModal({
   const handlePrevGroup = () => {
     if (hasPrevious && onSelectGroup) {
       onSelectGroup(allGroups[currentIndex - 1]);
+      setViewState('ProductGroup');
     }
   };
 
   const handleNextGroup = () => {
     if (hasNext && onSelectGroup) {
       onSelectGroup(allGroups[currentIndex + 1]);
+      setViewState('ProductGroup');
     }
   };
 
@@ -59,352 +99,681 @@ export default function PauseInspectModal({
     }
   };
 
-  const handleCheckout = async (productId: string) => {
-    try {
-      const { checkoutUrl } = await api.createCheckout(productGroup.id, [{ id: productId, quantity: 1 }]);
-      if (checkoutUrl) window.open(checkoutUrl, '_blank');
-    } catch (e: any) {
-      alert(`Checkout error: ${e.message}`);
+  const handleAllGroups = () => {
+    if (onOpenAllGroups) {
+      onOpenAllGroups();
+    } else {
+      setPreviousViewState(viewState);
+      setViewState('AllProductGroups');
     }
   };
 
-  const groupTitle = productGroup.title || productGroup.name || 'Featured Collection';
-  const groupSubtitle = productGroup.subtitle || productGroup.description || 'Interactive Video Showcase';
+  const handleProductClick = (product: Product) => {
+    setPreviousViewState(viewState);
+    setSelectedProduct(product);
+    setSelectedImageIndex(0);
+    setViewState('Product');
+  };
+
+  const handleBackToGroup = () => {
+    setViewState('ProductGroup');
+    setSelectedProduct(null);
+  };
+
+  const handleToggleBag = () => {
+    if (viewState === 'Cart') {
+      setViewState(previousViewState);
+    } else {
+      setPreviousViewState(viewState);
+      setViewState('Cart');
+    }
+  };
+
+  const handleCartCheckout = async () => {
+    if (items.length === 0) return;
+    setIsCheckingOut(true);
+    try {
+      const groupId = items[0]?.groupId || productGroup.id;
+      const checkoutItems = items.map((i) => ({
+        id: i.product.id,
+        title: i.product.title,
+        price: i.product.price,
+        imageUrl: i.product.imageUrl || i.product.imageUrls?.[0],
+        quantity: i.quantity,
+      }));
+      const { checkoutUrl } = await api.createCheckout(groupId, checkoutItems);
+      if (checkoutUrl) window.open(checkoutUrl, '_blank');
+    } catch (e: any) {
+      alert(`Checkout error: ${e.message}`);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
+  const handleCheckoutSingle = async (product: Product) => {
+    setIsCheckingOut(true);
+    try {
+      const { checkoutUrl } = await api.createCheckout(productGroup.id, [{
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        imageUrl: product.imageUrl || product.imageUrls?.[0],
+        quantity: 1,
+      }]);
+      if (checkoutUrl) window.open(checkoutUrl, '_blank');
+    } catch (e: any) {
+      alert(`Checkout error: ${e.message}`);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
+  const handleBuyCollection = async () => {
+    setIsCheckingOut(true);
+    try {
+      const items = productGroup.products.map((p) => ({
+        id: p.id,
+        title: p.title,
+        price: p.price,
+        imageUrl: p.imageUrl || p.imageUrls?.[0],
+        quantity: 1,
+      }));
+      const { checkoutUrl } = await api.createCheckout(productGroup.id, items);
+      if (checkoutUrl) window.open(checkoutUrl, '_blank');
+    } catch (e: any) {
+      alert(`Checkout error: ${e.message}`);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
+  const handleAddAllToBag = () => {
+    addAllToCart(productGroup.products, productGroup.id, productGroup.title || productGroup.name);
+    showToast(`Added all ${productGroup.products.length} collection items to bag!`);
+  };
+
+  const handleAddSingleToBag = (product: Product) => {
+    addToCart(product, productGroup.id, productGroup.title || productGroup.name, 1);
+    showToast(`Added "${product.title}" to bag!`);
+  };
+
+  const handleBuyNow = (product: Product) => {
+    addToCart(product, productGroup.id, productGroup.title || productGroup.name, 1);
+    setPreviousViewState('Product');
+    setViewState('Cart');
+  };
+
+
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const productImages = selectedProduct
+    ? (selectedProduct.imageUrls && selectedProduct.imageUrls.length > 0
+        ? selectedProduct.imageUrls
+        : selectedProduct.imageUrl ? [selectedProduct.imageUrl] : [])
+    : [];
 
   return (
-    <div className="pause-inspect-overlay" onClick={onResume}>
-      <div 
-        className="inspect-card" 
-        style={{ maxWidth: '600px', width: '92vw', background: 'rgba(15, 23, 42, 0.94)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.15)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Top Bar with Navigation Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShoppingBag size={18} color="var(--accent-cyan)" />
-            <div>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                {groupTitle}
-              </h3>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                {groupSubtitle} • @ {productGroup.timestampSeconds.toFixed(1)}s
-              </span>
-            </div>
-          </div>
-
+    <div className="main-product-grid" onClick={(e) => e.stopPropagation()}>
+      {/* Metro HUD Navigation Header */}
+      <nav className="nav">
+        <div className="video-player-nav">
+          {/* Resume Button */}
           <button
             type="button"
-            className="icon-btn"
             onClick={onResume}
-            aria-label="Close inspection"
-            style={{ width: '32px', height: '32px' }}
+            className="button-resume-grid button-base"
+            title="Resume Video"
           >
-            <X size={16} />
+            <div className="btn-disc">
+              <Play size={20} fill="#ffffff" strokeWidth={0} />
+            </div>
+            <span className="btn-label">Resume</span>
           </button>
-        </div>
 
-        {/* Product Group Navigator Pills */}
-        {allGroups.length > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-canvas)', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {/* Toggle Sound */}
+          {onToggleMute && (
+            <button
+              type="button"
+              onClick={onToggleMute}
+              className="button-sound-grid button-base"
+              title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+            >
+              <div className="btn-disc">
+                {isMuted ? (
+                  <VolumeX size={20} strokeWidth={2} color="#ffffff" />
+                ) : (
+                  <Volume2 size={20} strokeWidth={2} color="#ffffff" />
+                )}
+              </div>
+              <span className="btn-label">{isMuted ? 'Muted' : 'Sound'}</span>
+            </button>
+          )}
+
+          {/* Split View Docking Button */}
+          {onResumeToSplit && (
+            <button
+              type="button"
+              onClick={onResumeToSplit}
+              className="button-split-grid button-base"
+              title="Resume in Split View (Co-Pilot Mode)"
+            >
+              <div className="btn-disc">
+                <Columns size={20} strokeWidth={2} color="#ffffff" />
+              </div>
+              <span className="btn-label">Split View</span>
+            </button>
+          )}
+
+          {/* Dynamic Header Title */}
+          <div className="title">
+            {viewState === 'ProductGroup' && (productGroup.title || productGroup.name || 'Featured Products')}
+            {viewState === 'Product' && (selectedProduct?.title || 'Product Details')}
+            {viewState === 'AllProductGroups' && 'All Shoppable Moments'}
+            {viewState === 'Cart' && `Shopping Bag (${totalCount} item${totalCount === 1 ? '' : 's'})`}
+          </div>
+
+          {/* Action buttons depending on viewState */}
+          {viewState === 'ProductGroup' && (
+            <>
+              {onSeekAndPlay && (
+                <button
+                  type="button"
+                  onClick={handleSeek}
+                  className="button-locate-grid button-base"
+                  title="Seek and Play from this moment"
+                >
+                  <div className="btn-disc">
+                    <Compass size={21} strokeWidth={2} color="#ffffff" />
+                  </div>
+                  <span className="btn-label">Seek &amp; Play</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                className="btn-ghost"
                 onClick={handlePrevGroup}
                 disabled={!hasPrevious}
-                style={{ opacity: hasPrevious ? 1 : 0.4, cursor: hasPrevious ? 'pointer' : 'default', padding: '3px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', background: 'transparent', border: 'none', color: '#fff' }}
+                className={`button-prev-grid button-base ${!hasPrevious ? 'disabled' : ''}`}
+                title="Previous Group"
               >
-                <ChevronLeft size={13} /> Prev
+                <div className="btn-disc">
+                  <ChevronLeft size={22} strokeWidth={2.5} color="#ffffff" />
+                </div>
+                <span className="btn-label">Previous</span>
               </button>
 
               <button
                 type="button"
-                className="btn-ghost"
-                onClick={() => setShowAllGroups(!showAllGroups)}
-                style={{ padding: '3px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', background: showAllGroups ? 'rgba(255,255,255,0.1)' : 'transparent', borderRadius: '4px', border: '1px solid var(--border-subtle)', color: '#fff', cursor: 'pointer' }}
+                onClick={handleAllGroups}
+                className="button-all-grid button-base"
+                title="View All Product Groups"
               >
-                <Layers size={11} />
-                <span>Groups ({currentIndex + 1}/{allGroups.length})</span>
+                <div className="btn-disc">
+                  <Layers size={20} strokeWidth={2} color="#ffffff" />
+                </div>
+                <span className="btn-label">All Groups</span>
               </button>
 
               <button
                 type="button"
-                className="btn-ghost"
                 onClick={handleNextGroup}
                 disabled={!hasNext}
-                style={{ opacity: hasNext ? 1 : 0.4, cursor: hasNext ? 'pointer' : 'default', padding: '3px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', background: 'transparent', border: 'none', color: '#fff' }}
+                className={`button-next-grid button-base ${!hasNext ? 'disabled' : ''}`}
+                title="Next Group"
               >
-                Next <ChevronRight size={13} />
+                <div className="btn-disc">
+                  <ChevronRight size={22} strokeWidth={2.5} color="#ffffff" />
+                </div>
+                <span className="btn-label">Next</span>
               </button>
-            </div>
 
-            {onSeekAndPlay && (
               <button
                 type="button"
-                onClick={handleSeek}
-                style={{
-                  background: 'rgba(20, 184, 166, 0.2)',
-                  border: '1px solid var(--accent-teal)',
-                  color: 'var(--accent-teal-light)',
-                  padding: '3px 10px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
+                onClick={handleToggleBag}
+                className="button-bag-grid button-base"
+                title="Shopping Bag"
               >
-                <Compass size={11} /> Seek & Play
+                <div className="btn-disc" style={{ position: 'relative' }}>
+                  <ShoppingBag size={20} strokeWidth={2} color="#ffffff" />
+                  {totalCount > 0 && (
+                    <span className="btn-disc-badge badge-pill">{totalCount}</span>
+                  )}
+                </div>
+                <span className="btn-label">Bag</span>
               </button>
-            )}
-          </div>
-        )}
+            </>
+          )}
 
-        {/* All Groups Dropdown Selector (if expanded) */}
-        {showAllGroups && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', maxHeight: '140px', overflowY: 'auto', background: 'var(--bg-canvas)', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            {allGroups.map((g, idx) => {
-              const isSelected = g.id === productGroup.id;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => {
-                    if (onSelectGroup) onSelectGroup(g);
-                    setShowAllGroups(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '6px 8px',
-                    borderRadius: '4px',
-                    background: isSelected ? 'var(--accent-teal)' : 'rgba(255,255,255,0.05)',
-                    color: '#fff',
-                    border: 'none',
-                    fontSize: '11px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    #{idx + 1} {g.title || g.name}
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', opacity: 0.8, fontSize: '10px' }}>
-                    {g.timestampSeconds.toFixed(1)}s
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+          {viewState === 'Product' && (
+            <>
+              <button
+                type="button"
+                onClick={handleToggleBag}
+                className="button-bag-grid button-base"
+                title="Shopping Bag"
+              >
+                <div className="btn-disc" style={{ position: 'relative' }}>
+                  <ShoppingBag size={20} strokeWidth={2} color="#ffffff" />
+                  {totalCount > 0 && (
+                    <span className="btn-disc-badge badge-pill">{totalCount}</span>
+                  )}
+                </div>
+                <span className="btn-label">Bag</span>
+              </button>
 
-        {/* Product Items List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
-          {productGroup.products.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted)', fontSize: '13px' }}>
-              No products attached to this moment in the video.
+              <button
+                type="button"
+                onClick={handleBackToGroup}
+                className="button-up-grid button-base"
+                title="Back to Group"
+              >
+                <div className="btn-disc">
+                  <ArrowUp size={20} strokeWidth={2.5} color="#ffffff" />
+                </div>
+                <span className="btn-label">Back</span>
+              </button>
+            </>
+          )}
+
+          {viewState === 'AllProductGroups' && (
+            <button
+              type="button"
+              onClick={handleBackToGroup}
+              className="button-up-grid button-base"
+              title="Back to Group"
+            >
+              <div className="btn-disc">
+                <ArrowUp size={20} strokeWidth={2.5} color="#ffffff" />
+              </div>
+              <span className="btn-label">Back</span>
+            </button>
+          )}
+
+          {viewState === 'Cart' && (
+            <button
+              type="button"
+              onClick={() => setViewState(previousViewState)}
+              className="button-up-grid button-base"
+              title="Back"
+            >
+              <div className="btn-disc">
+                <ArrowUp size={20} strokeWidth={2.5} color="#ffffff" />
+              </div>
+              <span className="btn-label">Back</span>
+            </button>
+          )}
+
+          {/* Close HUD Button */}
+          <button
+            type="button"
+            onClick={onResume}
+            className="button-start-grid button-base"
+            title="Close"
+          >
+            <div className="btn-disc">
+              <X size={20} strokeWidth={2.5} color="#ffffff" />
             </div>
-          ) : (
-            productGroup.products.map((p) => {
-              const images = Array.isArray(p.imageUrls) && p.imageUrls.length > 0
-                ? p.imageUrls
-                : (p.imageUrl ? [p.imageUrl] : []);
-              const currentPhotoIdx = activePhotoIndices[p.id] || 0;
-              const currentPhotoUrl = images[currentPhotoIdx] || images[0] || p.imageUrl || '';
+            <span className="btn-label">Close</span>
+          </button>
+        </div>
+      </nav>
 
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="player-toast">
+          <Check size={16} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Product Group Tile List */}
+      {viewState === 'ProductGroup' && (
+        <div className="pg-products-list">
+          {/* Group Actions Banner */}
+          {(() => {
+            const groupRawTotal = productGroup.products.reduce((acc, p) => acc + (p.price || 0), 0);
+            const bundleDiscountPct = productGroup.bundleDiscountPercent || (productGroup.products.length > 1 ? 15 : 0);
+            const groupDiscountAmount = (groupRawTotal * bundleDiscountPct) / 100;
+            const groupBundleTotal = groupRawTotal - groupDiscountAmount;
+
+            return (
+              <div className="group-actions-banner">
+                <div className="group-actions-info">
+                  <div className="group-actions-title">
+                    <Zap size={16} color="var(--accent-amber)" />
+                    <span className="group-count-text">{productGroup.products.length} Items in Collection</span>
+                    {bundleDiscountPct > 0 && (
+                      <span className="group-discount-pill">{bundleDiscountPct}% OFF BUNDLE</span>
+                    )}
+                  </div>
+                  <div className="group-actions-pricing">
+                    <span className="group-bundle-price">${groupBundleTotal.toFixed(2)}</span>
+                    {bundleDiscountPct > 0 && (
+                      <span className="group-raw-price">${groupRawTotal.toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="group-actions-buttons">
+                  <button
+                    type="button"
+                    className="btn-buy-collection"
+                    onClick={handleBuyCollection}
+                    disabled={isCheckingOut}
+                  >
+                    <Zap size={15} fill="#ffffff" strokeWidth={0} />
+                    <span>{isCheckingOut ? 'Loading...' : '⚡ BUY COLLECTION'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-add-all"
+                    onClick={handleAddAllToBag}
+                  >
+                    <ShoppingBag size={15} />
+                    <span>+ ADD ALL TO BAG</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="products-container">
+            {productGroup.products.map((pt) => {
+              const image = pt.imageUrl || pt.imageUrls?.[0] || '/assets/images/shoppable-video-touch.svg';
               return (
                 <div
-                  key={p.id}
-                  style={{
-                    background: 'var(--bg-canvas)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '12px',
-                    display: 'flex',
-                    gap: '12px',
-                    alignItems: 'center',
-                  }}
+                  key={pt.id}
+                  className="product-template"
+                  onClick={() => handleProductClick(pt)}
                 >
-                  {/* Product Image & Multi-photo controls */}
-                  {currentPhotoUrl && (
-                    <div style={{ position: 'relative', width: '74px', height: '74px', flexShrink: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#000', border: '1px solid var(--border-subtle)' }}>
-                      <img
-                        src={currentPhotoUrl}
-                        alt={p.title}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          transition: 'opacity 0.15s ease',
-                        }}
-                      />
-
-                      {/* Multi-Photo Indicator Badge */}
-                      {images.length > 1 && (
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '2px',
-                          right: '2px',
-                          background: 'rgba(0,0,0,0.75)',
-                          color: '#fff',
-                          fontSize: '9px',
-                          fontWeight: 700,
-                          padding: '1px 4px',
-                          borderRadius: '2px',
-                          fontFamily: 'var(--font-mono)'
-                        }}>
-                          {currentPhotoIdx + 1}/{images.length}
-                        </div>
-                      )}
-
-                      {/* Mini Chevron Switchers */}
-                      {images.length > 1 && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActivePhotoIndices(prev => ({
-                                ...prev,
-                                [p.id]: currentPhotoIdx > 0 ? currentPhotoIdx - 1 : images.length - 1
-                              }));
-                            }}
-                            style={{
-                              position: 'absolute',
-                              left: '2px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
-                              background: 'rgba(0,0,0,0.6)',
-                              border: 'none',
-                              color: '#fff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              padding: 0
-                            }}
-                          >
-                            <ChevronLeft size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActivePhotoIndices(prev => ({
-                                ...prev,
-                                [p.id]: currentPhotoIdx < images.length - 1 ? currentPhotoIdx + 1 : 0
-                              }));
-                            }}
-                            style={{
-                              position: 'absolute',
-                              right: '2px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
-                              background: 'rgba(0,0,0,0.6)',
-                              border: 'none',
-                              color: '#fff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              padding: 0
-                            }}
-                          >
-                            <ChevronRight size={12} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.title}
-                      </h4>
-                    </div>
-                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 4px 0', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {p.description || '1-click checkout item'}
+                  <img src={image} alt={pt.title} className="product-template-image" />
+                  <span className="product-template-name">{pt.title}</span>
+                  <div className="product-template-description-container">
+                    <p className="product-template-description">
+                      {pt.description || 'Click to inspect product details and checkout.'}
                     </p>
-
-                    {/* Micro Thumbnails Strip if multiple photos */}
-                    {images.length > 1 && (
-                      <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-                        {images.map((img, i) => (
-                          <div
-                            key={i}
-                            onClick={() => setActivePhotoIndices(prev => ({ ...prev, [p.id]: i }))}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '2px',
-                              overflow: 'hidden',
-                              border: `1.5px solid ${i === currentPhotoIdx ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`,
-                              cursor: 'pointer',
-                              opacity: i === currentPhotoIdx ? 1 : 0.5,
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-                        ${p.price.toFixed(2)}
-                      </span>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        {p.externalUrl && (
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            style={{ width: '28px', height: '28px', background: 'var(--bg-surface-elevated)' }}
-                            onClick={() => window.open(p.externalUrl, '_blank')}
-                            title="Open Store Link"
-                          >
-                            <ExternalLink size={12} />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn-checkout"
-                          style={{ width: 'auto', padding: '5px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          onClick={() => handleCheckout(p.id)}
-                        >
-                          <CreditCard size={12} />
-                          <span>Buy Now</span>
-                        </button>
-                      </div>
-                    </div>
+                  </div>
+                  <div className="product-template-footer">
+                    <span className="product-template-price">${pt.price?.toFixed(2)}</span>
+                    <span className="product-template-action">Inspect</span>
                   </div>
                 </div>
               );
-            })
-          )}
+            })}
+          </div>
         </div>
+      )}
 
-        {/* Footer: Resume playback */}
-        <button
-          type="button"
-          className="btn-checkout"
-          style={{ background: 'var(--accent-cyan)', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-          onClick={onResume}
-        >
-          <Play size={15} />
-          <span>Resume Video Playback</span>
-        </button>
-      </div>
+      {/* Single Product Inspect View */}
+      {viewState === 'Product' && selectedProduct && (
+        <>
+          <section className="product-subtitle" title={selectedProduct.brand || productGroup.title}>
+            {selectedProduct.brand || productGroup.title || 'DigitPop Verified Item'}
+          </section>
+
+          <section className="product-price">
+            ${selectedProduct.price?.toFixed(2)}
+          </section>
+
+          {/* Dual Actions: Buy Now & Add to Bag */}
+          <div className="product-dual-actions">
+            <button
+              type="button"
+              className="product-buy-now"
+              onClick={() => handleBuyNow(selectedProduct)}
+            >
+              <CreditCard size={18} />
+              <span>BUY NOW</span>
+            </button>
+            <button
+              type="button"
+              className="product-add-to-bag"
+              onClick={() => handleAddSingleToBag(selectedProduct)}
+            >
+              <ShoppingBag size={18} />
+              <span>+ ADD TO BAG</span>
+            </button>
+          </div>
+
+          <div className="product-description-panel">
+            <p>{selectedProduct.description || 'No extended description available for this item.'}</p>
+          </div>
+
+          {/* Image Iterator Container */}
+          <div className="image-iterator-container">
+            <img
+              src={productImages[selectedImageIndex] || '/assets/images/shoppable-video-touch.svg'}
+              alt={selectedProduct.title}
+              className="product-main-image"
+              onClick={() => {
+                if (productImages.length > 1) {
+                  setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+                }
+              }}
+              title={productImages.length > 1 ? 'Click to view next image' : undefined}
+            />
+
+            {productImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="image-nav-btn prev"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+                  }}
+                  title="Previous image"
+                >
+                  <ChevronLeft size={20} color="#ffffff" />
+                </button>
+
+                <button
+                  type="button"
+                  className="image-nav-btn next"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+                  }}
+                  title="Next image"
+                >
+                  <ChevronRight size={20} color="#ffffff" />
+                </button>
+
+                <div className="image-counter-badge">
+                  {selectedImageIndex + 1} / {productImages.length}
+                </div>
+              </>
+            )}
+          </div>
+
+          {productImages.length > 1 && (
+            <div className="product-image-thumbnails">
+              {productImages.map((url, idx) => (
+                <img
+                  key={idx}
+                  src={url}
+                  alt={`Thumbnail ${idx + 1}`}
+                  className={`product-thumbnail ${selectedImageIndex === idx ? 'active' : ''}`}
+                  onClick={() => setSelectedImageIndex(idx)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Panoramic All Product Groups View */}
+      {viewState === 'AllProductGroups' && (
+        <div className="all-product-groups">
+          <div className="product-groups-container">
+            {allGroups.map((pg, idx) => {
+              const thumb = pg.products[0]?.imageUrl || pg.products[0]?.imageUrls?.[0] || '/assets/images/shoppable-video-touch.svg';
+              const isCurrent = pg.id === productGroup.id;
+              return (
+                <div
+                  key={pg.id || idx}
+                  className={`product-group-tile ${isCurrent ? 'active' : ''}`}
+                  onClick={() => {
+                    if (onSelectGroup) onSelectGroup(pg);
+                    setViewState('ProductGroup');
+                  }}
+                >
+                  <img src={thumb} alt={pg.title || 'Product Group'} className="product-group-thumbnail" />
+                  <span className="product-group-badge">{formatTime(pg.timestampSeconds)}</span>
+                  <span className="product-group-title">{pg.title || pg.name || `Moment ${idx + 1}`}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Metro Shopping Bag View */}
+      {viewState === 'Cart' && (
+        <div className="cart-full-grid">
+          {/* Left Column: Cart Items */}
+          <div className="cart-items-column">
+            {items.length === 0 ? (
+              <div className="cart-empty-state">
+                <div className="cart-empty-icon">
+                  <ShoppingBag size={48} strokeWidth={1.5} color="rgba(255,255,255,0.3)" />
+                </div>
+                <h3 className="cart-empty-title">Your shopping bag is empty</h3>
+                <p className="cart-empty-subtitle">
+                  Browse interactive products in the video and add them to your bag.
+                </p>
+                <button
+                  type="button"
+                  className="cart-empty-btn"
+                  onClick={() => setViewState(previousViewState)}
+                >
+                  Continue Browsing
+                </button>
+              </div>
+            ) : (
+              <div className="cart-items-list">
+                {items.map((item) => {
+                  const thumb = item.product.imageUrl || item.product.imageUrls?.[0] || '/assets/images/shoppable-video-touch.svg';
+                  return (
+                    <div key={item.product.id} className="cart-item-card">
+                      <img
+                        src={thumb}
+                        alt={item.product.title}
+                        className="cart-item-image"
+                      />
+                      <div className="cart-item-details">
+                        <div className="cart-item-header">
+                          <h4 className="cart-item-title">{item.product.title}</h4>
+                          <span className="cart-item-group-tag">
+                            From {item.groupTitle || 'Video Moment'}
+                          </span>
+                        </div>
+                        <div className="cart-item-price-row">
+                          <span className="cart-item-price">
+                            ${item.product.price ? item.product.price.toFixed(2) : '0.00'}
+                          </span>
+                          {item.product.compareAtPrice && item.product.compareAtPrice > (item.product.price || 0) && (
+                            <span className="cart-item-compare-price">
+                              ${item.product.compareAtPrice.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quantity Stepper & Remove */}
+                      <div className="cart-item-actions">
+                        <div className="cart-quantity-stepper">
+                          <button
+                            type="button"
+                            className="stepper-btn"
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            title="Decrease quantity"
+                          >
+                            <Minus size={14} strokeWidth={2.5} />
+                          </button>
+                          <span className="stepper-value">{item.quantity}</span>
+                          <button
+                            type="button"
+                            className="stepper-btn"
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            title="Increase quantity"
+                          >
+                            <Plus size={14} strokeWidth={2.5} />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          className="cart-remove-btn"
+                          onClick={() => removeFromCart(item.product.id)}
+                          title="Remove item"
+                        >
+                          <Trash2 size={16} strokeWidth={2} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Order Summary */}
+          <div className="cart-summary-column">
+            <div className="cart-summary-card">
+              <h3 className="cart-summary-title">Order Summary</h3>
+
+              <div className="cart-summary-row">
+                <span>Subtotal ({totalCount} item{totalCount === 1 ? '' : 's'})</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+
+              {bundleDiscount > 0 && (
+                <div className="cart-summary-row cart-discount-row">
+                  <span>Bundle Savings (15%)</span>
+                  <span>-${bundleDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="cart-summary-row">
+                <span>Estimated Shipping</span>
+                <span className="cart-free-shipping">FREE</span>
+              </div>
+
+              <div className="cart-summary-divider" />
+
+              <div className="cart-summary-total-row">
+                <span>Total</span>
+                <span className="cart-total-amount">${totalPrice.toFixed(2)}</span>
+              </div>
+
+              <button
+                type="button"
+                className="btn-stripe-checkout"
+                disabled={items.length === 0 || isCheckingOut}
+                onClick={handleCartCheckout}
+              >
+                {isCheckingOut ? (
+                  <span>Processing...</span>
+                ) : (
+                  <>
+                    <CreditCard size={18} strokeWidth={2} />
+                    <span>CHECKOUT WITH STRIPE</span>
+                  </>
+                )}
+              </button>
+
+              <div className="cart-checkout-badges">
+                <span className="badge-secure">🔒 Secure 256-Bit SSL Checkout</span>
+                <span className="badge-payments">Accepts Apple Pay • Google Pay • Visa • Mastercard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

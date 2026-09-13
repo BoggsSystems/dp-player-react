@@ -12,6 +12,7 @@ export interface Product {
   id: string;
   title: string;
   price: number;
+  compareAtPrice?: number;
   currency?: string;
   description?: string;
   imageUrl?: string;
