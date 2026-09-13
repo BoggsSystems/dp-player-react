@@ -23,7 +23,10 @@ export interface Product {
 
 export interface ProductGroup {
   id: string;
-  name: string;
+  name?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
   timestampSeconds: number;
   endTimestampSeconds?: number;
   viewingMode: ViewingMode;

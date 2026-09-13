@@ -9,6 +9,9 @@ interface VideoSurfaceProps {
   muted?: boolean;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   onEnded?: () => void;
+  onSurfaceTap?: () => void;
+  isPaused?: boolean;
+  seekTime?: number | null;
 }
 
 export default function VideoSurface({
@@ -18,6 +21,9 @@ export default function VideoSurface({
   muted = false,
   onTimeUpdate,
   onEnded,
+  onSurfaceTap,
+  isPaused = false,
+  seekTime = null,
 }: VideoSurfaceProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -30,6 +36,30 @@ export default function VideoSurface({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<any>(null);
+
+  // Sync external isPaused prop
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (isPaused && !video.paused) {
+      video.pause();
+      setIsPlaying(false);
+    } else if (!isPaused && video.paused) {
+      video.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  }, [isPaused]);
+
+  // Sync external seekTime prop
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && seekTime !== null && seekTime !== undefined) {
+      video.currentTime = seekTime;
+      setCurrentTime(seekTime);
+      video.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  }, [seekTime]);
 
   // Initialize HLS or Native VOD source
   useEffect(() => {
@@ -175,12 +205,20 @@ export default function VideoSurface({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const handleSurfaceClick = () => {
+    if (onSurfaceTap) {
+      onSurfaceTap();
+    } else {
+      togglePlay();
+    }
+  };
+
   return (
     <div
       ref={containerRef}
       className="player-container"
       onMouseMove={handleMouseMove}
-      onClick={togglePlay}
+      onClick={handleSurfaceClick}
     >
       <video
         ref={videoRef}

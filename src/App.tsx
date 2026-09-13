@@ -15,6 +15,9 @@ export default function App() {
   const [isInspectOpen, setIsInspectOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
 
+  const [isPaused, setIsPaused] = useState(false);
+  const [seekTime, setSeekTime] = useState<number | null>(null);
+
   // Parse path & search query
   const queryParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const pathname = window.location.pathname;
@@ -63,9 +66,9 @@ export default function App() {
       setIsInspectOpen(false);
     } else if (mode === 'PAUSE_INSPECT') {
       setIsInspectOpen(true);
+      setIsPaused(true);
       setIsDrawerOpen(false);
     } else {
-      // TAP_TO_REVEAL: Keep drawer closed, show hotspot beacon
       setIsDrawerOpen(false);
       setIsInspectOpen(false);
     }
@@ -82,10 +85,11 @@ export default function App() {
     setCurrentTime(time);
 
     if (!isLive && project?.productGroups) {
-      const matchingGroup = project.productGroups.find((g) => {
+      const matchingGroup = project.productGroups.find((g, i) => {
         const start = g.timestampSeconds;
-        const end = g.endTimestampSeconds || start + 15;
-        return time >= start && time <= end;
+        const next = project.productGroups![i + 1];
+        const end = next ? next.timestampSeconds : (g.endTimestampSeconds || start + 20);
+        return time >= start && time < end;
       });
 
       if (matchingGroup && matchingGroup.id !== activeGroup?.id) {
@@ -97,10 +101,50 @@ export default function App() {
     }
   };
 
+  // Signature DigitPop full-surface tap handler
+  const handleSurfaceTap = () => {
+    const groups = project?.productGroups || [];
+    if (groups.length === 0) return;
+
+    let target = groups.find((g, i) => {
+      const start = g.timestampSeconds;
+      const next = groups[i + 1];
+      const end = next ? next.timestampSeconds : (g.endTimestampSeconds || start + 20);
+      return currentTime >= start && currentTime < end;
+    });
+
+    if (!target) {
+      target = activeGroup || groups[0];
+    }
+    setActiveGroup(target);
+
+    const mode = target.viewingMode || 'PAUSE_INSPECT';
+    if (mode === 'SIDE_PANEL') {
+      setIsDrawerOpen((prev) => !prev);
+    } else if (mode === 'TAP_TO_REVEAL') {
+      setIsDrawerOpen((prev) => !prev);
+    } else {
+      // PAUSE_INSPECT: Signature pause and open catalog overlay
+      setIsPaused(true);
+      setIsInspectOpen(true);
+    }
+  };
+
+  const handleResumeFromInspect = () => {
+    setIsInspectOpen(false);
+    setIsPaused(false);
+  };
+
+  const handleSeekAndPlay = (seconds: number) => {
+    setSeekTime(seconds);
+    setIsInspectOpen(false);
+    setIsPaused(false);
+    setTimeout(() => setSeekTime(null), 100);
+  };
+
   // Determine media source URL
   const videoSourceUrl = useMemo(() => {
     if (isLive) {
-      // Direct HLS live stream from SRS or Cloudflare Stream
       return `http://${window.location.hostname || 'localhost'}:8080/live/${streamKey}.m3u8`;
     }
     return (
@@ -115,19 +159,25 @@ export default function App() {
       {/* Live Badge */}
       {isLive && <LiveBadge />}
 
-      {/* Core Video Player */}
+      {/* Core Video Player with Signature Full-Surface Tap */}
       <VideoSurface
         src={videoSourceUrl}
         isLive={isLive}
         autoplay
         onTimeUpdate={handleTimeUpdate}
+        onSurfaceTap={handleSurfaceTap}
+        isPaused={isPaused}
+        seekTime={seekTime}
       />
 
       {/* Hotspots & Overlays */}
       <HotspotLayer
         productGroup={activeGroup}
         onOpenDrawer={() => setIsDrawerOpen(true)}
-        onOpenInspect={() => setIsInspectOpen(true)}
+        onOpenInspect={() => {
+          setIsPaused(true);
+          setIsInspectOpen(true);
+        }}
       />
 
       {/* Shoppable Slide-out Drawer */}
@@ -137,11 +187,14 @@ export default function App() {
         productGroup={activeGroup}
       />
 
-      {/* Deep Inspection Modal */}
+      {/* Deep Inspection Modal with Full Catalog Navigation */}
       <PauseInspectModal
         isOpen={isInspectOpen}
-        onResume={() => setIsInspectOpen(false)}
+        onResume={handleResumeFromInspect}
         productGroup={activeGroup}
+        allGroups={project?.productGroups || []}
+        onSelectGroup={(g) => setActiveGroup(g)}
+        onSeekAndPlay={handleSeekAndPlay}
       />
     </main>
   );
