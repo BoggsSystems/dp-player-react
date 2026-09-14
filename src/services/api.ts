@@ -4,6 +4,10 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:9000').r
 
 export const api = {
   async getProject(id: string): Promise<Project> {
+    if (id === 'proj_opportunity_os_about' || id === 'opportunity_os_about' || id === 'about') {
+      return OPPORTUNITY_OS_ABOUT_PROJECT;
+    }
+
     // 1. Check Studio's active or saved projects in localStorage first
     try {
       const studioProjectsRaw = localStorage.getItem('digitpop_studio_projects');
@@ -219,12 +223,56 @@ export const TEST_BAVARIA_PROJECT: Project = {
   ],
 };
 
+export const OPPORTUNITY_OS_ABOUT_PROJECT: Project = {
+  id: 'proj_opportunity_os_about',
+  name: 'AI-Native Software Engineering & Opportunity OS',
+  description: 'Keynote speedrun and architectural overview by Jeffrey Boggs, author of AI-Native Software Engineering.',
+  masterVodUrl: '/videos/opportunity-os-about.mp4',
+  durationSeconds: 636.27,
+  productGroups: [
+    {
+      id: 'pg_book_spotlight',
+      title: 'AI-Native Software Engineering',
+      name: 'AI-Native Software Engineering',
+      subtitle: 'By Jeffrey Boggs — Founder, Boggs Systems Corporation',
+      description: 'The definitive blueprint on autonomous multi-agent loops, context window economics, and closed-loop verification sandboxes.',
+      timestampSeconds: 0.0,
+      endTimestampSeconds: 636.27,
+      viewingMode: 'SIDE_PANEL',
+      hotspotX: 78,
+      hotspotY: 35,
+      bundleDiscountPercent: 0,
+      products: [
+        {
+          id: 'prod_book_ai_native',
+          title: 'AI-Native Software Engineering',
+          brand: 'Jeffrey Boggs',
+          price: 34.99,
+          currency: 'USD',
+          description: 'The definitive guide breaking down why generative AI autocomplete reaches diminishing returns without deterministic multi-agent state machines.',
+          imageUrl: '/images/ai-native-software-engineering-cover.jpg',
+          imageUrls: [
+            '/images/ai-native-software-engineering-cover.jpg',
+            'https://m.media-amazon.com/images/I/71gnODcg5iL._SL1500_.jpg',
+          ],
+          externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
+          checkoutType: 'AMAZON',
+          buttonTextOverride: 'Buy on Amazon Prime',
+        },
+      ],
+    },
+  ],
+};
+
 function getDemoProject(id: string): Project {
+  if (id === 'opportunity_os_about' || id === 'proj_opportunity_os_about' || id === 'opp_about' || id === 'about') {
+    return OPPORTUNITY_OS_ABOUT_PROJECT;
+  }
   if (!id || id === 'proj_bavaria_luxury_001' || id === 'test' || id === 'demo_6_products') {
     return TEST_BAVARIA_PROJECT;
   }
   return {
-    ...TEST_BAVARIA_PROJECT,
+    ...OPPORTUNITY_OS_ABOUT_PROJECT,
     id,
   };
 }
