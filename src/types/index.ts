@@ -8,6 +8,8 @@ export interface ProductVariant {
   inStock?: boolean;
 }
 
+export type CheckoutType = 'NATIVE_STRIPE' | 'AMAZON' | 'SHOPIFY' | 'EXTERNAL_LINK';
+
 export interface Product {
   id: string;
   title: string;
@@ -21,6 +23,8 @@ export interface Product {
   stripePriceId?: string;
   variants?: ProductVariant[];
   brand?: string;
+  checkoutType?: CheckoutType;
+  buttonTextOverride?: string;
 }
 
 export interface ProductGroup {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns } from 'lucide-react';
+import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns, ExternalLink } from 'lucide-react';
 import { ProductGroup, Product } from '../types';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -198,6 +198,11 @@ export default function PauseInspectModal({
   };
 
   const handleBuyNow = (product: Product) => {
+    const isExternal = product.checkoutType && product.checkoutType !== 'NATIVE_STRIPE';
+    if (isExternal && product.externalUrl) {
+      window.open(product.externalUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     addToCart(product, productGroup.id, productGroup.title || productGroup.name, 1);
     setPreviousViewState('Product');
     setViewState('Cart');
@@ -519,16 +524,39 @@ export default function PauseInspectModal({
             ${selectedProduct.price?.toFixed(2)}
           </section>
 
-          {/* Dual Actions: Buy Now & Add to Bag */}
+          {/* Dual Actions: Dynamic Destination & Add to Bag */}
           <div className="product-dual-actions">
-            <button
-              type="button"
-              className="product-buy-now"
-              onClick={() => handleBuyNow(selectedProduct)}
-            >
-              <CreditCard size={18} />
-              <span>BUY NOW</span>
-            </button>
+            {(() => {
+              const checkoutType = selectedProduct.checkoutType || 'NATIVE_STRIPE';
+              const isAmazon = checkoutType === 'AMAZON';
+              const isShopify = checkoutType === 'SHOPIFY';
+              const isExternal = checkoutType === 'EXTERNAL_LINK';
+              
+              let label = selectedProduct.buttonTextOverride;
+              if (!label) {
+                if (isAmazon) label = 'BUY ON AMAZON';
+                else if (isShopify) label = 'BUY ON SHOPIFY';
+                else if (isExternal) label = 'VISIT STORE';
+                else label = 'BUY NOW';
+              }
+
+              return (
+                <button
+                  type="button"
+                  className={`product-buy-now ${isAmazon ? 'destination-amazon' : ''} ${isShopify ? 'destination-shopify' : ''}`}
+                  onClick={() => handleBuyNow(selectedProduct)}
+                  title={label}
+                >
+                  {isAmazon || isShopify || isExternal ? (
+                    <ExternalLink size={18} />
+                  ) : (
+                    <CreditCard size={18} />
+                  )}
+                  <span>{label}</span>
+                </button>
+              );
+            })()}
+
             <button
               type="button"
               className="product-add-to-bag"
