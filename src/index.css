@@ -2345,4 +2345,72 @@ html, body, #root {
   }
 }
 
+/* DigitPop Floating Sound Glyph Overlay */
+.dp-sound-toggle-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 30px;
+  padding: 8px 14px 8px 10px;
+  cursor: pointer;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.dp-sound-toggle-btn.unmuted {
+  padding: 9px;
+  border-radius: 50%;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.dp-sound-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+}
+
+.dp-sound-toggle-btn.muted {
+  animation: dpSoundPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes dpSoundPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5), 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0), 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.dp-sound-status-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
+.dp-sound-label {
+  line-height: 1;
+  text-transform: uppercase;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+
 

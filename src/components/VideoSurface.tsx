@@ -7,6 +7,7 @@ interface VideoSurfaceProps {
   isLive?: boolean;
   autoplay?: boolean;
   muted?: boolean;
+  onMuteToggle?: (isMuted: boolean) => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   onEnded?: () => void;
   onSurfaceTap?: () => void;
@@ -19,6 +20,7 @@ export default function VideoSurface({
   isLive = false,
   autoplay = true,
   muted = false,
+  onMuteToggle,
   onTimeUpdate,
   onEnded,
   onSurfaceTap,
@@ -176,6 +178,17 @@ export default function VideoSurface({
     }
   };
 
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    setIsMuted(nextMuted);
+    if (onMuteToggle) {
+      onMuteToggle(nextMuted);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -186,12 +199,31 @@ export default function VideoSurface({
         ref={videoRef}
         className="video-element"
         playsInline
-        crossOrigin="anonymous"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
         onEnded={onEnded}
       />
+
+      {/* Floating Sound Toggle Icon (Original DigitPop Sound Glyph) */}
+      <button
+        type="button"
+        className={`dp-sound-toggle-btn ${isMuted ? 'muted' : 'unmuted'}`}
+        style={isLive ? { left: '160px' } : undefined}
+        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+        title={isMuted ? 'Click to unmute' : 'Click to mute'}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleMute();
+        }}
+      >
+        <img
+          src={isMuted ? '/assets/images/muted_icon.svg' : '/assets/images/speaker_icon.svg'}
+          alt={isMuted ? 'Muted' : 'Sound On'}
+          className="dp-sound-status-icon"
+        />
+        {isMuted && <span className="dp-sound-label">UNMUTE</span>}
+      </button>
 
       {/* Center Play Beacon when paused */}
       {!isPlaying && (
@@ -216,7 +248,6 @@ export default function VideoSurface({
           <Play size={28} color="#fff" style={{ marginLeft: '4px' }} />
         </button>
       )}
-
 
     </div>
   );

@@ -23,7 +23,7 @@ function Player() {
   const [isPaused, setIsPaused] = useState(false);
   const [seekTime, setSeekTime] = useState<number | null>(null);
   const [isAllGroupsOpen, setIsAllGroupsOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   // View Mode: IMMERSIVE vs SPLIT_PANEL (Co-Pilot Side-by-Side)
   const [viewMode, setViewMode] = useState<'IMMERSIVE' | 'SPLIT_PANEL'>(() => {
@@ -209,6 +209,7 @@ function Player() {
               isLive={isLive}
               autoplay
               muted={isMuted}
+              onMuteToggle={(mutedVal) => setIsMuted(mutedVal)}
               onTimeUpdate={handleTimeUpdate}
               onSurfaceTap={handleSurfaceTap}
               isPaused={isPaused}
@@ -265,6 +266,7 @@ function Player() {
             isLive={isLive}
             autoplay
             muted={isMuted}
+            onMuteToggle={(mutedVal) => setIsMuted(mutedVal)}
             onTimeUpdate={handleTimeUpdate}
             onSurfaceTap={handleSurfaceTap}
             isPaused={isPaused}
