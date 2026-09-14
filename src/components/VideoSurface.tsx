@@ -15,6 +15,13 @@ interface VideoSurfaceProps {
   seekTime?: number | null;
 }
 
+function formatTime(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
 export default function VideoSurface({
   src,
   isLive = false,
@@ -30,11 +37,15 @@ export default function VideoSurface({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const scrubberTrackRef = useRef<HTMLDivElement | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(muted);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isHoveringScrubber, setIsHoveringScrubber] = useState(false);
+  const [isDraggingScrubber, setIsDraggingScrubber] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; time: number; pct: number } | null>(null);
 
   // Sync external isPaused prop
   useEffect(() => {
@@ -189,6 +200,54 @@ export default function VideoSurface({
     }
   };
 
+  // Option A Ghost Ambient Scrubber Seek Calculations
+  const calculateSeekTime = (clientX: number): { time: number; pct: number } => {
+    if (!scrubberTrackRef.current || duration <= 0) return { time: 0, pct: 0 };
+    const rect = scrubberTrackRef.current.getBoundingClientRect();
+    const clampedX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const pct = rect.width > 0 ? clampedX / rect.width : 0;
+    const time = pct * duration;
+    return { time, pct: pct * 100 };
+  };
+
+  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsDraggingScrubber(true);
+    try {
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {}
+    const { time, pct } = calculateSeekTime(e.clientX);
+    setHoverPosition({ x: e.clientX, time, pct });
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = time;
+      setCurrentTime(time);
+      if (onTimeUpdate) onTimeUpdate(time, duration);
+    }
+  };
+
+  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    const { time, pct } = calculateSeekTime(e.clientX);
+    setHoverPosition({ x: e.clientX, time, pct });
+    if (isDraggingScrubber) {
+      const video = videoRef.current;
+      if (video) {
+        video.currentTime = time;
+        setCurrentTime(time);
+        if (onTimeUpdate) onTimeUpdate(time, duration);
+      }
+    }
+  };
+
+  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsDraggingScrubber(false);
+    try {
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    } catch {}
+  };
+
   return (
     <div
       ref={containerRef}
@@ -247,6 +306,51 @@ export default function VideoSurface({
         >
           <Play size={28} color="#fff" style={{ marginLeft: '4px' }} />
         </button>
+      )}
+
+      {/* Option A: Ghost Ambient Scrubber (Ultra-Minimalist seek bar) */}
+      {!isLive && duration > 0 && (
+        <div
+          ref={scrubberTrackRef}
+          className={`dp-ambient-scrubber-zone ${isHoveringScrubber || isDraggingScrubber ? 'active' : ''}`}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={handleScrubberPointerDown}
+          onPointerMove={handleScrubberPointerMove}
+          onPointerUp={handleScrubberPointerUp}
+          onPointerEnter={() => setIsHoveringScrubber(true)}
+          onPointerLeave={() => {
+            if (!isDraggingScrubber) {
+              setIsHoveringScrubber(false);
+              setHoverPosition(null);
+            }
+          }}
+          title="Drag or click to seek"
+        >
+          {/* Floating Time Pill Tooltip on Hover/Scrub */}
+          {(isHoveringScrubber || isDraggingScrubber) && hoverPosition && (
+            <div
+              className="dp-scrubber-tooltip"
+              style={{
+                left: `${Math.max(4, Math.min(96, hoverPosition.pct))}%`,
+              }}
+            >
+              <span>{formatTime(hoverPosition.time)}</span>
+              <span className="dp-scrubber-tooltip-divider">/</span>
+              <span className="dp-scrubber-tooltip-dur">{formatTime(duration)}</span>
+            </div>
+          )}
+
+          {/* Scrubber Track Line */}
+          <div className="dp-ambient-track">
+            {/* Played Progress Bar */}
+            <div
+              className="dp-ambient-progress"
+              style={{ width: `${Math.max(0, Math.min(100, (currentTime / duration) * 100))}%` }}
+            >
+              <div className="dp-ambient-thumb" />
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

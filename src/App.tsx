@@ -128,7 +128,7 @@ function Player() {
     }
   };
 
-  // Signature DigitPop full-surface tap handler
+  // Signature DigitPop full-surface tap handler: opens full-screen product view directly
   const handleSurfaceTap = () => {
     const groups = project?.productGroups || [];
     if (groups.length === 0) return;
@@ -145,18 +145,43 @@ function Player() {
     }
     setActiveGroup(target);
 
-    const mode = target.viewingMode || 'PAUSE_INSPECT';
-    if (mode === 'SIDE_PANEL') {
-      setIsDrawerOpen((prev) => !prev);
-    } else if (mode === 'TAP_TO_REVEAL') {
-      setIsDrawerOpen((prev) => !prev);
-    } else {
-      // PAUSE_INSPECT: Signature pause and open catalog overlay
-      setInspectProduct(null);
-      setIsPaused(true);
-      setIsInspectOpen(true);
-    }
+    // Direct transition into the deep full-screen product view
+    const product = target.products && target.products.length > 0 ? target.products[0] : null;
+    setInspectProduct(product);
+    setIsPaused(true);
+    setIsInspectOpen(true);
+    setIsDrawerOpen(false);
   };
+
+  // Keyboard controls: ArrowLeft/Right seek 5s, Space play/pause, M mute
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        setIsPaused((prev) => !prev);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const newTime = Math.max(0, currentTime - 5);
+        setSeekTime(newTime);
+        setTimeout(() => setSeekTime(null), 100);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const duration = project?.durationSeconds || 636;
+        const newTime = Math.min(duration, currentTime + 5);
+        setSeekTime(newTime);
+        setTimeout(() => setSeekTime(null), 100);
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setIsMuted((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentTime, project?.durationSeconds]);
 
   const handleResumeFromInspect = () => {
     setIsInspectOpen(false);
