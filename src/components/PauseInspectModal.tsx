@@ -568,7 +568,11 @@ export default function PauseInspectModal({
           </div>
 
           <div className="product-description-panel">
-            <p>{selectedProduct.description || 'No extended description available for this item.'}</p>
+            {(selectedProduct.description || 'No extended description available for this item.')
+              .split('\n\n')
+              .map((paragraph, pIdx) => (
+                <p key={pIdx}>{paragraph}</p>
+              ))}
           </div>
 
           {/* Image Iterator Container */}
