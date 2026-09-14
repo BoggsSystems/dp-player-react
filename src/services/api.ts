@@ -249,7 +249,7 @@ export const OPPORTUNITY_OS_ABOUT_PROJECT: Project = {
           brand: 'Jeffrey Boggs',
           price: 34.99,
           currency: 'USD',
-          description: 'The definitive guide breaking down why generative AI autocomplete reaches diminishing returns without deterministic multi-agent state machines.',
+          description: 'AI-Native Software Engineering explores a fundamental shift in how software is built now that execution has become cheap and abundant. Unlike previous technological changes, AI collapses long-standing constraints that shaped traditional engineering teams, workflows, and SDLCs, making it possible for a single individual to design, generate, validate, and operate systems that once required entire teams. Drawing from real end-to-end systems, Jeff Boggs demonstrates how modern software development is moving away from role-based execution toward system-level thinking, orchestration, and intent. This book is not about prompts or productivity tricks; it is about a new engineering archetype—the software orchestrator—who focuses on decomposition, feedback loops, and strategy while AI handles implementation. Written for senior engineers, technical leaders, and founders questioning traditional team models, AI-Native Software Engineering argues that when execution is no longer scarce, clarity of thought becomes the true competitive advantage.',
           imageUrl: '/images/ai-native-software-engineering-cover.jpg',
           imageUrls: [
             '/images/ai-native-software-engineering-cover.jpg',
