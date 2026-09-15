@@ -451,6 +451,8 @@ html, body, #root {
   width: 100%;
   height: 100%;
   z-index: 50;
+  container-type: inline-size;
+  container-name: player-stage;
   background: rgba(0, 0, 0, 0.35);
   background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 27%, rgba(0,0,0,0.75) 100%);
   -webkit-backdrop-filter: blur(20px);
@@ -465,6 +467,18 @@ html, body, #root {
   color: #fff;
   user-select: none;
   animation: hudBackdropFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Default Desktop Grid Passthrough */
+.product-inspect-grid-wrapper,
+.product-inspect-details,
+.product-inspect-media {
+  display: contents;
+}
+
+.product-buy-now.single-cta {
+  flex: 1 1 100% !important;
+  width: 100% !important;
 }
 
 /* Metro HUD Navigation Header */
@@ -1362,64 +1376,219 @@ html, body, #root {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* Responsive Overrides */
-@media only screen and (max-width: 680px) {
+/* ==========================================================================
+   CONTAINER QUERIES & RESPONSIVE DESIGN (Embedded Stage & Mobile)
+   ========================================================================== */
+
+@container player-stage (max-width: 860px) {
   .main-product-grid {
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-    overflow-y: auto;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 18px 16px !important;
+    overflow-y: auto !important;
+    gap: 8px !important;
   }
+
   .main-product-grid .nav {
-    grid-column: auto;
-    grid-row: auto;
-    width: 100%;
-    margin-bottom: 16px;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    margin-bottom: 2px !important;
+    animation: none !important;
+    display: block !important;
   }
+
   .video-player-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    justify-content: flex-start;
-    height: auto;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: auto !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    gap: 8px !important;
   }
+
   .video-player-nav .title {
-    width: 100%;
-    order: -1;
-    font-size: 18px;
-    margin: 0 0 8px 0;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    flex: 1 !important;
+    font-size: clamp(13px, 2.4cqi, 17px) !important;
+    font-weight: 600 !important;
+    margin: 0 8px !important;
+    text-align: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
+
   .button-base {
-    width: 52px;
-    font-size: 9px;
+    width: 44px !important;
+    min-width: 44px !important;
+    font-size: 8px !important;
   }
+
+  .button-base .btn-disc {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .button-base .btn-label {
+    display: none !important;
+  }
+
+  /* Compact 2-Column Product Inspect Card */
+  .product-inspect-grid-wrapper {
+    display: flex !important;
+    flex: 1 !important;
+    width: 100% !important;
+    gap: 16px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+  }
+
+  .product-inspect-media {
+    display: flex !important;
+    flex: 0 0 42% !important;
+    max-width: 260px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    height: 100% !important;
+    position: relative !important;
+  }
+
+  .product-inspect-media .image-iterator-container {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 180px !important;
+    position: relative !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+  }
+
+  .product-inspect-media .product-main-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+  }
+
+  .product-inspect-media .product-image-thumbnails {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    display: flex !important;
+    gap: 6px !important;
+    height: 36px !important;
+    overflow-x: auto !important;
+  }
+
+  .product-inspect-media .product-thumbnail {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 4px !important;
+  }
+
+  .product-inspect-details {
+    display: flex !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .product-subtitle {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    font-size: 11px !important;
+    margin: 0 !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .product-price {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #5abeff !important;
+    margin: 0 !important;
+  }
+
+  .product-dual-actions {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin: 2px 0 6px !important;
+  }
+
+  .product-buy-now {
+    height: 42px !important;
+    font-size: 12px !important;
+    letter-spacing: 0.5px !important;
+    border-radius: 6px !important;
+  }
+
+  .product-description-panel {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    flex: 1 !important;
+    font-size: 12.5px !important;
+    line-height: 1.55 !important;
+    padding: 12px 14px !important;
+    border-radius: 8px !important;
+    overflow-y: auto !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+  }
+
   .pg-products-list,
   .all-product-groups,
-  .product-description-panel,
-  .cart-full-grid,
-  .cart-items-column,
-  .cart-summary-column {
-    grid-column: auto;
-    grid-row: auto;
-    width: 100%;
-  }
   .cart-full-grid {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    width: 100% !important;
   }
-  .product-subtitle,
-  .product-price,
-  .product-buy-now,
-  .product-buy-token,
-  .product-main-image,
-  .product-image-thumbnails {
-    grid-column: auto;
-    grid-row: auto;
-    width: 100%;
-    margin-bottom: 12px;
+}
+
+/* Mobile Viewport / Bottom-Sheet (< 520px) */
+@container player-stage (max-width: 520px) {
+  .main-product-grid {
+    padding: 10px 12px 14px !important;
+    gap: 6px !important;
+  }
+
+  .product-inspect-grid-wrapper {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    gap: 10px !important;
+  }
+
+  .product-inspect-media {
+    flex: 0 0 auto !important;
+    max-width: 100% !important;
+    height: 160px !important;
+  }
+
+  .product-inspect-details {
+    flex: 1 1 auto !important;
+    overflow: visible !important;
+  }
+
+  .product-description-panel {
+    max-height: 130px !important;
+  }
+
+  .product-buy-now {
+    height: 46px !important;
+    font-size: 13px !important;
   }
 }
 

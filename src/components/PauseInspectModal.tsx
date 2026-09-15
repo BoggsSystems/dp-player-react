@@ -356,20 +356,22 @@ export default function PauseInspectModal({
 
           {viewState === 'Product' && (
             <>
-              <button
-                type="button"
-                onClick={handleToggleBag}
-                className="button-bag-grid button-base"
-                title="Shopping Bag"
-              >
-                <div className="btn-disc" style={{ position: 'relative' }}>
-                  <ShoppingBag size={20} strokeWidth={2} color="#ffffff" />
-                  {totalCount > 0 && (
-                    <span className="btn-disc-badge badge-pill">{totalCount}</span>
-                  )}
-                </div>
-                <span className="btn-label">Bag</span>
-              </button>
+              {selectedProduct?.checkoutType !== 'AMAZON' && (selectedProduct as any)?.source !== 'AMAZON' && selectedProduct?.checkoutType !== 'EXTERNAL_LINK' && (
+                <button
+                  type="button"
+                  onClick={handleToggleBag}
+                  className="button-bag-grid button-base"
+                  title="Shopping Bag"
+                >
+                  <div className="btn-disc" style={{ position: 'relative' }}>
+                    <ShoppingBag size={20} strokeWidth={2} color="#ffffff" />
+                    {totalCount > 0 && (
+                      <span className="btn-disc-badge badge-pill">{totalCount}</span>
+                    )}
+                  </div>
+                  <span className="btn-label">Bag</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -515,127 +517,136 @@ export default function PauseInspectModal({
 
       {/* Single Product Inspect View */}
       {viewState === 'Product' && selectedProduct && (
-        <>
-          <section className="product-subtitle" title={selectedProduct.brand || productGroup.title}>
-            {selectedProduct.brand || productGroup.title || 'DigitPop Verified Item'}
-          </section>
+        <div className="product-inspect-grid-wrapper">
+          <div className="product-inspect-details">
+            <section className="product-subtitle" title={selectedProduct.brand || productGroup.title}>
+              {selectedProduct.brand || productGroup.title || 'DigitPop Verified Item'}
+            </section>
 
-          <section className="product-price">
-            ${selectedProduct.price?.toFixed(2)}
-          </section>
+            <section className="product-price">
+              ${selectedProduct.price?.toFixed(2)}
+            </section>
 
-          {/* Dual Actions: Dynamic Destination & Add to Bag */}
-          <div className="product-dual-actions">
-            {(() => {
-              const checkoutType = selectedProduct.checkoutType || 'NATIVE_STRIPE';
-              const isAmazon = checkoutType === 'AMAZON';
-              const isShopify = checkoutType === 'SHOPIFY';
-              const isExternal = checkoutType === 'EXTERNAL_LINK';
-              
-              let label = selectedProduct.buttonTextOverride;
-              if (!label) {
-                if (isAmazon) label = 'BUY ON AMAZON';
-                else if (isShopify) label = 'BUY ON SHOPIFY';
-                else if (isExternal) label = 'VISIT STORE';
-                else label = 'BUY NOW';
-              }
-
-              return (
-                <button
-                  type="button"
-                  className={`product-buy-now ${isAmazon ? 'destination-amazon' : ''} ${isShopify ? 'destination-shopify' : ''}`}
-                  onClick={() => handleBuyNow(selectedProduct)}
-                  title={label}
-                >
-                  {isAmazon || isShopify || isExternal ? (
-                    <ExternalLink size={18} />
-                  ) : (
-                    <CreditCard size={18} />
-                  )}
-                  <span>{label}</span>
-                </button>
-              );
-            })()}
-
-            <button
-              type="button"
-              className="product-add-to-bag"
-              onClick={() => handleAddSingleToBag(selectedProduct)}
-            >
-              <ShoppingBag size={18} />
-              <span>+ ADD TO BAG</span>
-            </button>
-          </div>
-
-          <div className="product-description-panel">
-            {(selectedProduct.description || 'No extended description available for this item.')
-              .split('\n\n')
-              .map((paragraph, pIdx) => (
-                <p key={pIdx}>{paragraph}</p>
-              ))}
-          </div>
-
-          {/* Image Iterator Container */}
-          <div className="image-iterator-container">
-            <img
-              src={productImages[selectedImageIndex] || '/assets/images/shoppable-video-touch.svg'}
-              alt={selectedProduct.title}
-              className="product-main-image"
-              onClick={() => {
-                if (productImages.length > 1) {
-                  setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+            {/* Dual Actions: Dynamic Destination & Add to Bag */}
+            <div className="product-dual-actions">
+              {(() => {
+                const checkoutType = selectedProduct.checkoutType || 'NATIVE_STRIPE';
+                const isAmazon = checkoutType === 'AMAZON' || (selectedProduct as any).source === 'AMAZON';
+                const isShopify = checkoutType === 'SHOPIFY' || (selectedProduct as any).source === 'SHOPIFY';
+                const isExternal = checkoutType === 'EXTERNAL_LINK';
+                const showBag = !isAmazon && !isExternal;
+                
+                let label = selectedProduct.buttonTextOverride;
+                if (!label) {
+                  if (isAmazon) label = 'BUY ON AMAZON';
+                  else if (isShopify) label = 'BUY ON SHOPIFY';
+                  else if (isExternal) label = 'VISIT STORE';
+                  else label = 'BUY NOW';
                 }
-              }}
-              title={productImages.length > 1 ? 'Click to view next image' : undefined}
-            />
+
+                return (
+                  <>
+                    <button
+                      type="button"
+                      className={`product-buy-now ${isAmazon ? 'destination-amazon' : ''} ${isShopify ? 'destination-shopify' : ''} ${!showBag ? 'single-cta' : ''}`}
+                      onClick={() => handleBuyNow(selectedProduct)}
+                      title={label}
+                    >
+                      {isAmazon || isShopify || isExternal ? (
+                        <ExternalLink size={18} />
+                      ) : (
+                        <CreditCard size={18} />
+                      )}
+                      <span>{label}</span>
+                    </button>
+
+                    {showBag && (
+                      <button
+                        type="button"
+                        className="product-add-to-bag"
+                        onClick={() => handleAddSingleToBag(selectedProduct)}
+                      >
+                        <ShoppingBag size={18} />
+                        <span>+ ADD TO BAG</span>
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="product-description-panel">
+              {(selectedProduct.description || 'No extended description available for this item.')
+                .split('\n\n')
+                .map((paragraph, pIdx) => (
+                  <p key={pIdx}>{paragraph}</p>
+                ))}
+            </div>
+          </div>
+
+          <div className="product-inspect-media">
+            {/* Image Iterator Container */}
+            <div className="image-iterator-container">
+              <img
+                src={productImages[selectedImageIndex] || '/assets/images/shoppable-video-touch.svg'}
+                alt={selectedProduct.title}
+                className="product-main-image"
+                onClick={() => {
+                  if (productImages.length > 1) {
+                    setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+                  }
+                }}
+                title={productImages.length > 1 ? 'Click to view next image' : undefined}
+              />
+
+              {productImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="image-nav-btn prev"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+                    }}
+                    title="Previous image"
+                  >
+                    <ChevronLeft size={20} color="#ffffff" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="image-nav-btn next"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+                    }}
+                    title="Next image"
+                  >
+                    <ChevronRight size={20} color="#ffffff" />
+                  </button>
+
+                  <div className="image-counter-badge">
+                    {selectedImageIndex + 1} / {productImages.length}
+                  </div>
+                </>
+              )}
+            </div>
 
             {productImages.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className="image-nav-btn prev"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
-                  }}
-                  title="Previous image"
-                >
-                  <ChevronLeft size={20} color="#ffffff" />
-                </button>
-
-                <button
-                  type="button"
-                  className="image-nav-btn next"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
-                  }}
-                  title="Next image"
-                >
-                  <ChevronRight size={20} color="#ffffff" />
-                </button>
-
-                <div className="image-counter-badge">
-                  {selectedImageIndex + 1} / {productImages.length}
-                </div>
-              </>
+              <div className="product-image-thumbnails">
+                {productImages.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className={`product-thumbnail ${selectedImageIndex === idx ? 'active' : ''}`}
+                    onClick={() => setSelectedImageIndex(idx)}
+                  />
+                ))}
+              </div>
             )}
           </div>
-
-          {productImages.length > 1 && (
-            <div className="product-image-thumbnails">
-              {productImages.map((url, idx) => (
-                <img
-                  key={idx}
-                  src={url}
-                  alt={`Thumbnail ${idx + 1}`}
-                  className={`product-thumbnail ${selectedImageIndex === idx ? 'active' : ''}`}
-                  onClick={() => setSelectedImageIndex(idx)}
-                />
-              ))}
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {/* Panoramic All Product Groups View */}
