@@ -4,7 +4,20 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:9000').r
 
 export const api = {
   async getProject(id: string): Promise<Project> {
-    if (id === 'proj_opportunity_os_about' || id === 'opportunity_os_about' || id === 'about') {
+    if (
+      id === '2cc6c64d-a3c6-4de1-9596-2b39df9d3155' ||
+      id === 'opportunity_os_job_application' ||
+      id === 'job_application' ||
+      id === 'speedrun'
+    ) {
+      return OPPORTUNITY_OS_JOB_APPLICATION_PROJECT;
+    }
+    if (
+      id === 'ba3087e7-bb6b-420f-bbb2-2a8fc7dda9df' ||
+      id === 'proj_opportunity_os_about' ||
+      id === 'opportunity_os_about' ||
+      id === 'about'
+    ) {
       return OPPORTUNITY_OS_ABOUT_PROJECT;
     }
 
@@ -224,7 +237,7 @@ export const TEST_BAVARIA_PROJECT: Project = {
 };
 
 export const OPPORTUNITY_OS_ABOUT_PROJECT: Project = {
-  id: 'proj_opportunity_os_about',
+  id: 'ba3087e7-bb6b-420f-bbb2-2a8fc7dda9df',
   name: 'AI-Native Software Engineering & Opportunity OS',
   description: 'Keynote speedrun and architectural overview by Jeffrey Boggs, author of AI-Native Software Engineering.',
   masterVodUrl: '/videos/opportunity-os-about.mp4',
@@ -245,19 +258,87 @@ export const OPPORTUNITY_OS_ABOUT_PROJECT: Project = {
       products: [
         {
           id: 'prod_book_ai_native',
-          title: 'AI-Native Software Engineering',
+          title: 'AI-Native Software Engineering: The New Physics of Software Velocity',
           brand: 'Jeffrey Boggs',
-          price: 34.99,
+          price: 9.99,
           currency: 'USD',
           description: 'AI-Native Software Engineering explores a fundamental shift in how software is built now that execution has become cheap and abundant. Unlike previous technological changes, AI collapses long-standing constraints that shaped traditional engineering teams, workflows, and SDLCs, making it possible for a single individual to design, generate, validate, and operate systems that once required entire teams.\n\nDrawing from real end-to-end systems, Jeff Boggs demonstrates how modern software development is moving away from role-based execution toward system-level thinking, orchestration, and intent. This book is not about prompts or productivity tricks; it is about a new engineering archetype—the software orchestrator—who focuses on decomposition, feedback loops, and strategy while AI handles implementation. Written for senior engineers, technical leaders, and founders questioning traditional team models, AI-Native Software Engineering argues that when execution is no longer scarce, clarity of thought becomes the true competitive advantage.',
-          imageUrl: '/images/ai-native-software-engineering-cover.jpg',
+          imageUrl: 'https://m.media-amazon.com/images/I/71-xK7vVlLL._SL1500_.jpg',
           imageUrls: [
+            'https://m.media-amazon.com/images/I/71-xK7vVlLL._SL1500_.jpg',
             '/images/ai-native-software-engineering-cover.jpg',
-            'https://m.media-amazon.com/images/I/71gnODcg5iL._SL1500_.jpg',
           ],
           externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
           checkoutType: 'AMAZON',
-          buttonTextOverride: 'Buy on Amazon Prime',
+          buttonTextOverride: 'Buy on Amazon ($9.99 / $24.95)',
+        },
+      ],
+    },
+  ],
+};
+
+export const OPPORTUNITY_OS_JOB_APPLICATION_PROJECT: Project = {
+  id: '2cc6c64d-a3c6-4de1-9596-2b39df9d3155',
+  name: 'Opportunity OS Live Job Application Speedrun & Studio Setup',
+  description: 'Live job application session featuring Opportunity OS automations, AI-Native Software Engineering book discussion, and studio setup.',
+  masterVodUrl: '/videos/opportunity-os-job-application.mp4',
+  thumbnailUrl: '/thumbnails/opportunity-os-job-application.jpg',
+  durationSeconds: 398.97,
+  productGroups: [
+    {
+      id: 'pg_speedrun_gear',
+      title: 'Featured in Video & Studio Setup',
+      name: 'Featured in Video & Studio Setup',
+      subtitle: 'Opportunity OS Platform, AI-Native Engineering Book & Studio Lighting',
+      description: 'Complete toolkit, literature, and studio gear shown throughout this live application session.',
+      timestampSeconds: 0.0,
+      endTimestampSeconds: 398.97,
+      viewingMode: 'SIDE_PANEL',
+      hotspotX: 82,
+      hotspotY: 40,
+      bundleDiscountPercent: 0,
+      products: [
+        {
+          id: 'prod_opp_os_app',
+          title: 'Opportunity OS — AI Job Search & Application Assistant',
+          brand: 'Opportunity OS',
+          price: 59.00,
+          currency: 'USD',
+          description: 'Autonomous AI job search, ATS portal autofill in 10ms, customized cover letter generation, and real-time candidate proof-of-work telemetry.',
+          imageUrl: '/thumbnails/opportunity-os-job-application.jpg',
+          imageUrls: ['/thumbnails/opportunity-os-job-application.jpg'],
+          externalUrl: 'https://opportunity-system.com/#/plans',
+          checkoutType: 'EXTERNAL_LINK',
+          buttonTextOverride: 'Choose Plan on Opportunity OS',
+        },
+        {
+          id: 'prod_book_ai_native_speedrun',
+          title: 'AI-Native Software Engineering: The New Physics of Software Velocity',
+          brand: 'Jeffrey Boggs',
+          price: 9.99,
+          currency: 'USD',
+          description: 'The definitive manifesto on why autocomplete and chat prompts hit a hard velocity wall, and how autonomous agent loops rewrite software economics.',
+          imageUrl: 'https://m.media-amazon.com/images/I/71-xK7vVlLL._SL1500_.jpg',
+          imageUrls: [
+            'https://m.media-amazon.com/images/I/71-xK7vVlLL._SL1500_.jpg',
+            '/images/ai-native-software-engineering-cover.jpg',
+          ],
+          externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
+          checkoutType: 'AMAZON',
+          buttonTextOverride: 'Buy on Amazon ($9.99 / $24.95)',
+        },
+        {
+          id: 'prod_miortior_lamp',
+          title: 'Miortior Smart RGB LED Corner Floor Lamp',
+          brand: 'Miortior',
+          price: 39.99,
+          currency: 'USD',
+          description: 'Modern minimalist RGB corner lamp featured in studio background. App & remote control, music sync, 16 million colors.',
+          imageUrl: '/images/miortior-corner-floor-lamp.jpg',
+          imageUrls: ['/images/miortior-corner-floor-lamp.jpg'],
+          externalUrl: 'https://www.amazon.com/dp/B0C2HDKZD7',
+          checkoutType: 'AMAZON',
+          buttonTextOverride: 'Buy on Amazon ($39.99)',
         },
       ],
     },
@@ -265,7 +346,21 @@ export const OPPORTUNITY_OS_ABOUT_PROJECT: Project = {
 };
 
 function getDemoProject(id: string): Project {
-  if (id === 'opportunity_os_about' || id === 'proj_opportunity_os_about' || id === 'opp_about' || id === 'about') {
+  if (
+    id === '2cc6c64d-a3c6-4de1-9596-2b39df9d3155' ||
+    id === 'opportunity_os_job_application' ||
+    id === 'job_application' ||
+    id === 'speedrun'
+  ) {
+    return OPPORTUNITY_OS_JOB_APPLICATION_PROJECT;
+  }
+  if (
+    id === 'ba3087e7-bb6b-420f-bbb2-2a8fc7dda9df' ||
+    id === 'opportunity_os_about' ||
+    id === 'proj_opportunity_os_about' ||
+    id === 'opp_about' ||
+    id === 'about'
+  ) {
     return OPPORTUNITY_OS_ABOUT_PROJECT;
   }
   if (!id || id === 'proj_bavaria_luxury_001' || id === 'test' || id === 'demo_6_products') {
