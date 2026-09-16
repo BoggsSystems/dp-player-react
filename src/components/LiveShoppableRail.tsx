@@ -243,8 +243,12 @@ export default function LiveShoppableRail({
                     className="live-rail-thumb"
                     loading="lazy"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop&q=80';
+                      const img = e.currentTarget as HTMLImageElement;
+                      if (product.imageUrls && product.imageUrls.length > 1 && img.src !== product.imageUrls[1]) {
+                        img.src = product.imageUrls[1];
+                      } else {
+                        img.src = '/assets/images/placeholder-product.png';
+                      }
                     }}
                   />
                   <span className="live-rail-thumb-overlay">

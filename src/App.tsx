@@ -145,9 +145,8 @@ function Player() {
     }
     setActiveGroup(target);
 
-    // Direct transition into the deep full-screen product view
-    const product = target.products && target.products.length > 0 ? target.products[0] : null;
-    setInspectProduct(product);
+    // Open full multi-product collection view for the current moment
+    setInspectProduct(null);
     setIsPaused(true);
     setIsInspectOpen(true);
     setIsDrawerOpen(false);
