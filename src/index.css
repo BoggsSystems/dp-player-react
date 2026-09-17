@@ -653,65 +653,106 @@ html, body, #root, main, .player-container {
 
 .products-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  padding: 10px 0;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 22px;
+  padding: 16px 0;
 }
 
-/* Metro Flat Product Tile */
+/* Metro Flat Product Tile — Option A: Elevated Horizontal Showcase Card */
 .product-template {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  grid-template-rows: auto 1fr auto;
-  gap: 8px 16px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 14px;
+  display: flex;
+  flex-direction: row;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 0;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
-  height: 160px;
+  min-height: 230px;
+  max-height: 250px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   animation: metroTileStagger 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .product-template:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: #5abeff;
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(56, 189, 248, 0.22);
+}
+
+.product-template-image-container {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  height: 100%;
+  background: #0b1120;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .product-template-image {
-  grid-column: 1 / 2;
-  grid-row: 1 / 4;
-  width: 120px;
-  height: 132px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 0;
-  background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  object-position: center;
+  transition: transform 0.35s ease;
 }
 
-.product-template-name {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-  font-size: 15px;
-  font-weight: 500;
-  color: #fff;
+.product-template:hover .product-template-image {
+  transform: scale(1.04);
+}
+
+.product-template-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  gap: 8px;
+}
+
+.product-template-brand {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #38bdf8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.product-template-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .product-template-description-container {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
+  flex: 1;
   overflow: hidden;
 }
 
 .product-template-description {
-  font-size: 12px;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.4;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -720,28 +761,51 @@ html, body, #root, main, .player-container {
 }
 
 .product-template-footer {
-  grid-column: 2 / 3;
-  grid-row: 3 / 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.product-template-price-col {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .product-template-price {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: #5abeff;
+  color: #38bdf8;
+  font-family: var(--font-mono, monospace);
+}
+
+.product-template-compare-price {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: line-through;
 }
 
 .product-template-action {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #fff;
-  background: rgba(90, 190, 255, 0.2);
-  border: 1px solid #5abeff;
-  padding: 4px 10px;
-  letter-spacing: 0.5px;
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid #38bdf8;
+  padding: 6px 14px;
+  border-radius: 4px;
+  letter-spacing: 0.6px;
+  transition: all 0.2s ease;
+}
+
+.product-template:hover .product-template-action {
+  background: #38bdf8;
+  color: #0b1120;
+  font-weight: 800;
 }
 
 /* Single Product Inspect View Layout (within .main-product-grid) */

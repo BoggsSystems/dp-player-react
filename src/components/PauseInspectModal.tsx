@@ -497,16 +497,38 @@ export default function PauseInspectModal({
                   className="product-template"
                   onClick={() => handleProductClick(pt)}
                 >
-                  <img src={image} alt={pt.title} className="product-template-image" />
-                  <span className="product-template-name">{pt.title}</span>
-                  <div className="product-template-description-container">
-                    <p className="product-template-description">
-                      {pt.description || 'Click to inspect product details and checkout.'}
-                    </p>
+                  <div className="product-template-image-container">
+                    <img
+                      src={image}
+                      alt={pt.title}
+                      className="product-template-image"
+                      onError={(e) => {
+                        const img = e.currentTarget as HTMLImageElement;
+                        if (pt.imageUrls && pt.imageUrls.length > 1 && img.src !== pt.imageUrls[1]) {
+                          img.src = pt.imageUrls[1];
+                        } else {
+                          img.src = '/assets/images/placeholder-product.png';
+                        }
+                      }}
+                    />
                   </div>
-                  <div className="product-template-footer">
-                    <span className="product-template-price">${pt.price?.toFixed(2)}</span>
-                    <span className="product-template-action">Inspect</span>
+                  <div className="product-template-content">
+                    {pt.brand && <span className="product-template-brand">{pt.brand}</span>}
+                    <h3 className="product-template-name" title={pt.title}>{pt.title}</h3>
+                    <div className="product-template-description-container">
+                      <p className="product-template-description">
+                        {pt.description || 'Click to inspect product details and checkout.'}
+                      </p>
+                    </div>
+                    <div className="product-template-footer">
+                      <div className="product-template-price-col">
+                        <span className="product-template-price">${pt.price?.toFixed(2)}</span>
+                        {pt.compareAtPrice && pt.compareAtPrice > pt.price && (
+                          <span className="product-template-compare-price">${pt.compareAtPrice.toFixed(2)}</span>
+                        )}
+                      </div>
+                      <span className="product-template-action">Inspect</span>
+                    </div>
                   </div>
                 </div>
               );
