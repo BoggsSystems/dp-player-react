@@ -243,54 +243,57 @@ export default function PauseInspectModal({
       {/* Metro HUD Navigation Header */}
       <nav className="nav">
         <div className="video-player-nav">
-          {/* Resume Button */}
-          <button
-            type="button"
-            onClick={onResume}
-            className="button-resume-grid button-base"
-            title="Resume Video"
-          >
-            <div className="btn-disc">
-              <Play size={20} fill="#ffffff" strokeWidth={0} />
-            </div>
-            <span className="btn-label">Resume</span>
-          </button>
-
-          {/* Toggle Sound */}
-          {onToggleMute && (
+          {/* Left Zone: Playback & Audio Controls */}
+          <div className="video-player-nav-left">
+            {/* Resume Button */}
             <button
               type="button"
-              onClick={onToggleMute}
-              className="button-sound-grid button-base"
-              title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+              onClick={onResume}
+              className="button-base button-resume-disc"
+              title="Resume Video"
             >
               <div className="btn-disc">
-                {isMuted ? (
-                  <VolumeX size={20} strokeWidth={2} color="#ffffff" />
-                ) : (
-                  <Volume2 size={20} strokeWidth={2} color="#ffffff" />
-                )}
+                <Play size={18} fill="#ffffff" strokeWidth={0} />
               </div>
-              <span className="btn-label">{isMuted ? 'Muted' : 'Sound'}</span>
+              <span className="btn-label">Resume</span>
             </button>
-          )}
 
-          {/* Split View Docking Button */}
-          {onResumeToSplit && (
-            <button
-              type="button"
-              onClick={onResumeToSplit}
-              className="button-split-grid button-base"
-              title="Resume in Split View (Co-Pilot Mode)"
-            >
-              <div className="btn-disc">
-                <Columns size={20} strokeWidth={2} color="#ffffff" />
-              </div>
-              <span className="btn-label">Split View</span>
-            </button>
-          )}
+            {/* Toggle Sound */}
+            {onToggleMute && (
+              <button
+                type="button"
+                onClick={onToggleMute}
+                className="button-base button-sound-disc"
+                title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+              >
+                <div className="btn-disc">
+                  {isMuted ? (
+                    <VolumeX size={18} strokeWidth={2} color="#ffffff" />
+                  ) : (
+                    <Volume2 size={18} strokeWidth={2} color="#ffffff" />
+                  )}
+                </div>
+                <span className="btn-label">{isMuted ? 'Muted' : 'Sound'}</span>
+              </button>
+            )}
 
-          {/* Dynamic Header Title */}
+            {/* Split View Docking Button */}
+            {onResumeToSplit && (
+              <button
+                type="button"
+                onClick={onResumeToSplit}
+                className="button-base button-split-disc"
+                title="Resume in Split View (Co-Pilot Mode)"
+              >
+                <div className="btn-disc">
+                  <Columns size={18} strokeWidth={2} color="#ffffff" />
+                </div>
+                <span className="btn-label">Split View</span>
+              </button>
+            )}
+          </div>
+
+          {/* Center Zone: Dynamic Header Title */}
           <div className="title">
             {viewState === 'ProductGroup' && (productGroup.title || productGroup.name || 'Featured Products')}
             {viewState === 'Product' && (selectedProduct?.title || 'Product Details')}
@@ -298,164 +301,170 @@ export default function PauseInspectModal({
             {viewState === 'Cart' && `Shopping Bag (${totalCount} item${totalCount === 1 ? '' : 's'})`}
           </div>
 
-          {/* Action buttons depending on viewState */}
-          {viewState === 'ProductGroup' && (
-            <>
-              {onSeekAndPlay && (
-                <button
-                  type="button"
-                  onClick={handleSeek}
-                  className="button-locate-grid button-base"
-                  title="Seek and Play from this moment"
-                >
-                  <div className="btn-disc">
-                    <Compass size={21} strokeWidth={2} color="#ffffff" />
-                  </div>
-                  <span className="btn-label">Seek &amp; Play</span>
-                </button>
-              )}
+          {/* Right Zone: Contextual Navigation & Global Actions */}
+          <div className="video-player-nav-right">
+            {viewState === 'ProductGroup' && (
+              <>
+                {allGroups && allGroups.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handlePrevGroup}
+                      disabled={!hasPrevious}
+                      className={`button-base button-prev-disc ${!hasPrevious ? 'disabled' : ''}`}
+                      title="Previous Group"
+                    >
+                      <div className="btn-disc">
+                        <ChevronLeft size={20} strokeWidth={2.5} color="#ffffff" />
+                      </div>
+                      <span className="btn-label">Previous</span>
+                    </button>
 
-              <button
-                type="button"
-                onClick={handlePrevGroup}
-                disabled={!hasPrevious}
-                className={`button-prev-grid button-base ${!hasPrevious ? 'disabled' : ''}`}
-                title="Previous Group"
-              >
-                <div className="btn-disc">
-                  <ChevronLeft size={22} strokeWidth={2.5} color="#ffffff" />
-                </div>
-                <span className="btn-label">Previous</span>
-              </button>
+                    <button
+                      type="button"
+                      onClick={handleAllGroups}
+                      className="button-base button-all-disc"
+                      title="View All Product Groups"
+                    >
+                      <div className="btn-disc">
+                        <Layers size={18} strokeWidth={2} color="#ffffff" />
+                      </div>
+                      <span className="btn-label">All Groups</span>
+                    </button>
 
-              <button
-                type="button"
-                onClick={handleAllGroups}
-                className="button-all-grid button-base"
-                title="View All Product Groups"
-              >
-                <div className="btn-disc">
-                  <Layers size={20} strokeWidth={2} color="#ffffff" />
-                </div>
-                <span className="btn-label">All Groups</span>
-              </button>
+                    <button
+                      type="button"
+                      onClick={handleNextGroup}
+                      disabled={!hasNext}
+                      className={`button-base button-next-disc ${!hasNext ? 'disabled' : ''}`}
+                      title="Next Group"
+                    >
+                      <div className="btn-disc">
+                        <ChevronRight size={20} strokeWidth={2.5} color="#ffffff" />
+                      </div>
+                      <span className="btn-label">Next</span>
+                    </button>
+                  </>
+                )}
 
-              <button
-                type="button"
-                onClick={handleNextGroup}
-                disabled={!hasNext}
-                className={`button-next-grid button-base ${!hasNext ? 'disabled' : ''}`}
-                title="Next Group"
-              >
-                <div className="btn-disc">
-                  <ChevronRight size={22} strokeWidth={2.5} color="#ffffff" />
-                </div>
-                <span className="btn-label">Next</span>
-              </button>
+                {onSeekAndPlay && productGroup.timestampSeconds !== undefined && allGroups && allGroups.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleSeek}
+                    className="button-base button-locate-disc"
+                    title="Seek and Play from this moment"
+                  >
+                    <div className="btn-disc">
+                      <Compass size={19} strokeWidth={2} color="#ffffff" />
+                    </div>
+                    <span className="btn-label">Seek &amp; Play</span>
+                  </button>
+                )}
 
-              <button
-                type="button"
-                onClick={handleToggleBag}
-                className="button-bag-grid button-base"
-                title="Shopping Bag"
-              >
-                <div className="btn-disc" style={{ position: 'relative' }}>
-                  <ShoppingBag size={20} strokeWidth={2} color="#ffffff" />
-                  {totalCount > 0 && (
-                    <span className="btn-disc-badge badge-pill">{totalCount}</span>
-                  )}
-                </div>
-                <span className="btn-label">Bag</span>
-              </button>
-            </>
-          )}
-
-          {viewState === 'Product' && (
-            <>
-              {selectedProduct?.checkoutType !== 'AMAZON' && (selectedProduct as any)?.source !== 'AMAZON' && selectedProduct?.checkoutType !== 'EXTERNAL_LINK' && (
                 <button
                   type="button"
                   onClick={handleToggleBag}
-                  className="button-bag-grid button-base"
+                  className="button-base button-bag-disc"
                   title="Shopping Bag"
                 >
                   <div className="btn-disc" style={{ position: 'relative' }}>
-                    <ShoppingBag size={20} strokeWidth={2} color="#ffffff" />
+                    <ShoppingBag size={18} strokeWidth={2} color="#ffffff" />
                     {totalCount > 0 && (
                       <span className="btn-disc-badge badge-pill">{totalCount}</span>
                     )}
                   </div>
                   <span className="btn-label">Bag</span>
                 </button>
-              )}
+              </>
+            )}
 
+            {viewState === 'Product' && (
+              <>
+                {selectedProduct?.checkoutType !== 'AMAZON' && (selectedProduct as any)?.source !== 'AMAZON' && selectedProduct?.checkoutType !== 'EXTERNAL_LINK' && (
+                  <button
+                    type="button"
+                    onClick={handleToggleBag}
+                    className="button-base button-bag-disc"
+                    title="Shopping Bag"
+                  >
+                    <div className="btn-disc" style={{ position: 'relative' }}>
+                      <ShoppingBag size={18} strokeWidth={2} color="#ffffff" />
+                      {totalCount > 0 && (
+                        <span className="btn-disc-badge badge-pill">{totalCount}</span>
+                      )}
+                    </div>
+                    <span className="btn-label">Bag</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleBackToGroup}
+                  className="button-base button-up-disc"
+                  title="Back to Group"
+                >
+                  <div className="btn-disc">
+                    <ArrowUp size={19} strokeWidth={2.5} color="#ffffff" />
+                  </div>
+                  <span className="btn-label">Back</span>
+                </button>
+              </>
+            )}
+
+            {viewState === 'AllProductGroups' && (
               <button
                 type="button"
                 onClick={handleBackToGroup}
-                className="button-up-grid button-base"
+                className="button-base button-up-disc"
                 title="Back to Group"
               >
                 <div className="btn-disc">
-                  <ArrowUp size={20} strokeWidth={2.5} color="#ffffff" />
+                  <ArrowUp size={19} strokeWidth={2.5} color="#ffffff" />
                 </div>
                 <span className="btn-label">Back</span>
               </button>
-            </>
-          )}
+            )}
 
-          {viewState === 'AllProductGroups' && (
+            {viewState === 'Cart' && (
+              <button
+                type="button"
+                onClick={() => setViewState(previousViewState)}
+                className="button-base button-up-disc"
+                title="Back"
+              >
+                <div className="btn-disc">
+                  <ArrowUp size={19} strokeWidth={2.5} color="#ffffff" />
+                </div>
+                <span className="btn-label">Back</span>
+              </button>
+            )}
+
+            {/* Share Shoppable Video Button */}
             <button
               type="button"
-              onClick={handleBackToGroup}
-              className="button-up-grid button-base"
-              title="Back to Group"
+              onClick={() => setShowShareModal(true)}
+              className="button-base button-share-disc"
+              title="Share Video & Products"
             >
               <div className="btn-disc">
-                <ArrowUp size={20} strokeWidth={2.5} color="#ffffff" />
+                <Share2 size={18} strokeWidth={2} color="#ffffff" />
               </div>
-              <span className="btn-label">Back</span>
+              <span className="btn-label">Share</span>
             </button>
-          )}
 
-          {viewState === 'Cart' && (
+            {/* Close HUD Button */}
             <button
               type="button"
-              onClick={() => setViewState(previousViewState)}
-              className="button-up-grid button-base"
-              title="Back"
+              onClick={onResume}
+              className="button-base button-close-disc"
+              title="Close Inspection"
             >
               <div className="btn-disc">
-                <ArrowUp size={20} strokeWidth={2.5} color="#ffffff" />
+                <X size={19} strokeWidth={2.5} color="#ffffff" />
               </div>
-              <span className="btn-label">Back</span>
+              <span className="btn-label">Close</span>
             </button>
-          )}
-
-          {/* Share Shoppable Video Button */}
-          <button
-            type="button"
-            onClick={() => setShowShareModal(true)}
-            className="button-share-grid button-base"
-            title="Share Video & Products"
-          >
-            <div className="btn-disc">
-              <Share2 size={19} strokeWidth={2} color="#ffffff" />
-            </div>
-            <span className="btn-label">Share</span>
-          </button>
-
-          {/* Close HUD Button */}
-          <button
-            type="button"
-            onClick={onResume}
-            className="button-start-grid button-base"
-            title="Close"
-          >
-            <div className="btn-disc">
-              <X size={20} strokeWidth={2.5} color="#ffffff" />
-            </div>
-            <span className="btn-label">Close</span>
-          </button>
+          </div>
         </div>
       </nav>
 

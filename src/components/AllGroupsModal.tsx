@@ -40,33 +40,37 @@ export default function AllGroupsModal({
       {/* Metro HUD Navigation Header */}
       <nav className="nav">
         <div className="video-player-nav">
-          <button
-            type="button"
-            onClick={onClose}
-            className="button-resume-grid button-base"
-            title="Resume Video"
-          >
-            <div className="btn-disc">
-              <Play size={20} fill="#ffffff" strokeWidth={0} />
-            </div>
-            <span className="btn-label">Resume</span>
-          </button>
+          <div className="video-player-nav-left">
+            <button
+              type="button"
+              onClick={onClose}
+              className="button-base button-resume-disc"
+              title="Resume Video"
+            >
+              <div className="btn-disc">
+                <Play size={18} fill="#ffffff" strokeWidth={0} />
+              </div>
+              <span className="btn-label">Resume</span>
+            </button>
+          </div>
 
           <div className="title">
             All Shoppable Moments ({allGroups.length})
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="button-start-grid button-base"
-            title="Close"
-          >
-            <div className="btn-disc">
-              <X size={20} strokeWidth={2.5} color="#ffffff" />
-            </div>
-            <span className="btn-label">Close</span>
-          </button>
+          <div className="video-player-nav-right">
+            <button
+              type="button"
+              onClick={onClose}
+              className="button-base button-close-disc"
+              title="Close"
+            >
+              <div className="btn-disc">
+                <X size={19} strokeWidth={2.5} color="#ffffff" />
+              </div>
+              <span className="btn-label">Close</span>
+            </button>
+          </div>
         </div>
       </nav>
 

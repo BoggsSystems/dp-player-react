@@ -517,25 +517,40 @@ html, body, #root, main, .player-container {
 
 .video-player-nav {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(48, 1fr);
-  grid-template-rows: 75px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 68px;
+}
+
+.video-player-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .video-player-nav .title {
-  grid-column: 10 / 30;
-  grid-row: 1 / 2;
-  font-size: 22px;
-  font-weight: 500;
-  color: #fff;
-  margin-left: 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.video-player-nav-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Metro Circular Action Buttons */
@@ -544,7 +559,7 @@ html, body, #root, main, .player-container {
   outline: none;
   background: transparent;
   color: #fff;
-  width: 68px;
+  width: 54px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -558,36 +573,39 @@ html, body, #root, main, .player-container {
 }
 
 .button-base .btn-disc {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.75);
-  background: rgba(0, 0, 0, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
 
 .button-base:not(.disabled):hover .btn-disc {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: #ffffff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
 }
 
 .button-base:not(.disabled):active .btn-disc {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(0.94);
+  background: rgba(56, 189, 248, 0.4);
+  transform: scale(0.93);
 }
 
 .button-base .btn-label {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 9.5px;
+  font-weight: 600;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.85);
   text-align: center;
-  margin-top: 5px;
+  margin-top: 4px;
   white-space: nowrap;
   display: block;
   letter-spacing: 0.5px;
@@ -595,7 +613,7 @@ html, body, #root, main, .player-container {
 }
 
 .button-base.disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -605,61 +623,61 @@ html, body, #root, main, .player-container {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #5abeff;
+  background: #38bdf8;
   color: #0b111e;
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
+  font-size: 10.5px;
+  font-weight: 800;
+  min-width: 17px;
+  height: 17px;
   border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   line-height: 1;
 }
 
-/* Nav Grid Column Mapping */
-.button-resume-grid {
-  grid-column: 1 / 4;
-  grid-row: 1 / 2;
+/* Responsive compact viewport queries */
+@media (max-width: 1024px) {
+  .video-player-nav {
+    gap: 8px;
+    min-height: 58px;
+  }
+  .video-player-nav-left,
+  .video-player-nav-right {
+    gap: 8px;
+  }
+  .button-base {
+    width: auto;
+  }
+  .button-base .btn-disc {
+    width: 36px;
+    height: 36px;
+  }
+  .button-base .btn-label {
+    display: none;
+  }
+  .video-player-nav .title {
+    font-size: 16px;
+  }
 }
-.button-sound-grid {
-  grid-column: 4 / 7;
-  grid-row: 1 / 2;
-}
-.button-split-grid {
-  grid-column: 7 / 10;
-  grid-row: 1 / 2;
-}
-.button-locate-grid {
-  grid-column: 30 / 33;
-  grid-row: 1 / 2;
-}
-.button-prev-grid {
-  grid-column: 33 / 36;
-  grid-row: 1 / 2;
-}
-.button-all-grid {
-  grid-column: 36 / 39;
-  grid-row: 1 / 2;
-}
-.button-next-grid {
-  grid-column: 39 / 42;
-  grid-row: 1 / 2;
-}
-.button-bag-grid {
-  grid-column: 42 / 45;
-  grid-row: 1 / 2;
-}
-.button-up-grid {
-  grid-column: 42 / 45;
-  grid-row: 1 / 2;
-}
-.button-start-grid {
-  grid-column: 45 / 48;
-  grid-row: 1 / 2;
+
+@media (max-width: 640px) {
+  .video-player-nav {
+    gap: 6px;
+  }
+  .video-player-nav-left,
+  .video-player-nav-right {
+    gap: 6px;
+  }
+  .button-base .btn-disc {
+    width: 32px;
+    height: 32px;
+  }
+  .video-player-nav .title {
+    font-size: 14px;
+  }
 }
 
 /* Product Group Products List (Rows 6-23, Columns 2-12) */
