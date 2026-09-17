@@ -41,11 +41,19 @@ export default function VideoSurface({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(muted);
+  const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isHoveringScrubber, setIsHoveringScrubber] = useState(false);
   const [isDraggingScrubber, setIsDraggingScrubber] = useState(false);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; time: number; pct: number } | null>(null);
+
+  // Sync initial volume
+  useEffect(() => {
+    if (videoRef.current) {
+      setVolume(videoRef.current.volume ?? 1);
+    }
+  }, []);
 
   // Sync external isPaused prop
   useEffect(() => {
@@ -189,12 +197,33 @@ export default function VideoSurface({
     }
   };
 
+  const handleVolumeChange = (newVol: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const clamped = Math.max(0, Math.min(1, newVol));
+    video.volume = clamped;
+    setVolume(clamped);
+    if (clamped === 0) {
+      video.muted = true;
+      setIsMuted(true);
+      if (onMuteToggle) onMuteToggle(true);
+    } else if (isMuted) {
+      video.muted = false;
+      setIsMuted(false);
+      if (onMuteToggle) onMuteToggle(false);
+    }
+  };
+
   const toggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
     const nextMuted = !video.muted;
     video.muted = nextMuted;
     setIsMuted(nextMuted);
+    if (!nextMuted && (video.volume === 0 || volume === 0)) {
+      video.volume = 0.8;
+      setVolume(0.8);
+    }
     if (onMuteToggle) {
       onMuteToggle(nextMuted);
     }
@@ -264,25 +293,45 @@ export default function VideoSurface({
         onEnded={onEnded}
       />
 
-      {/* Floating Sound Toggle Icon (Original DigitPop Sound Glyph) */}
-      <button
-        type="button"
-        className={`dp-sound-toggle-btn ${isMuted ? 'muted' : 'unmuted'}`}
+      {/* Floating Sound & Hover-Expand Volume Slider */}
+      <div
+        className={`dp-sound-control-wrap ${isMuted ? 'muted' : 'unmuted'}`}
         style={isLive ? { left: '160px' } : undefined}
-        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-        title={isMuted ? 'Click to unmute' : 'Click to mute'}
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleMute();
-        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={isMuted ? '/assets/images/muted_icon.svg' : '/assets/images/speaker_icon.svg'}
-          alt={isMuted ? 'Muted' : 'Sound On'}
-          className="dp-sound-status-icon"
-        />
-        {isMuted && <span className="dp-sound-label">UNMUTE</span>}
-      </button>
+        <button
+          type="button"
+          className="dp-sound-toggle-btn"
+          aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+          title={isMuted ? 'Click to unmute' : 'Click to mute'}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMute();
+          }}
+        >
+          <img
+            src={isMuted ? '/assets/images/muted_icon.svg' : '/assets/images/speaker_icon.svg'}
+            alt={isMuted ? 'Muted' : 'Sound On'}
+            className="dp-sound-status-icon"
+          />
+          {isMuted && <span className="dp-sound-label">UNMUTE</span>}
+        </button>
+
+        {/* Subtle Hover-Expand Volume Slider */}
+        <div className="dp-volume-slider-box">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.02"
+            value={isMuted ? 0 : volume}
+            onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+            className="dp-volume-range"
+            aria-label="Volume Slider"
+            title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+          />
+        </div>
+      </div>
 
       {/* Center Play Beacon when paused */}
       {!isPlaying && (

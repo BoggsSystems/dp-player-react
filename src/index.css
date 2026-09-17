@@ -2731,48 +2731,36 @@ html, body, #root, main, .player-container {
   }
 }
 
-/* DigitPop Floating Sound Glyph Overlay */
-.dp-sound-toggle-btn {
+/* DigitPop Floating Sound & Expandable Volume Slider */
+.dp-sound-control-wrap {
   position: absolute;
   top: 20px;
   left: 20px;
   z-index: 35;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
   border-radius: 30px;
-  padding: 8px 14px 8px 10px;
-  cursor: pointer;
-  color: #ffffff;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  padding: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
-.dp-sound-toggle-btn.unmuted {
-  padding: 9px;
-  border-radius: 50%;
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.35);
+.dp-sound-control-wrap:hover,
+.dp-sound-control-wrap:focus-within {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(56, 189, 248, 0.25);
+  padding-right: 12px;
 }
 
-.dp-sound-toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.85);
-  border-color: #ffffff;
-  transform: scale(1.08);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
-}
-
-.dp-sound-toggle-btn.muted {
+.dp-sound-control-wrap.muted {
   animation: dpSoundPulse 2.2s infinite ease-in-out;
+  border-color: rgba(255, 255, 255, 0.85);
 }
 
 @keyframes dpSoundPulse {
@@ -2782,6 +2770,27 @@ html, body, #root, main, .player-container {
   50% {
     box-shadow: 0 0 0 8px rgba(255, 255, 255, 0), 0 4px 20px rgba(0, 0, 0, 0.5);
   }
+}
+
+.dp-sound-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  transition: transform 0.15s ease;
+}
+
+.dp-sound-toggle-btn:hover {
+  transform: scale(1.05);
 }
 
 .dp-sound-status-icon {
@@ -2796,6 +2805,70 @@ html, body, #root, main, .player-container {
   text-transform: uppercase;
   color: #ffffff;
   font-weight: 800;
+  margin-right: 2px;
+}
+
+/* Hover-Expand Slider Track */
+.dp-volume-slider-box {
+  width: 0px;
+  opacity: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.dp-sound-control-wrap:hover .dp-volume-slider-box,
+.dp-sound-control-wrap:focus-within .dp-volume-slider-box {
+  width: 72px;
+  opacity: 1;
+  pointer-events: auto;
+  margin-left: 2px;
+}
+
+.dp-volume-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 68px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+  transition: background 0.15s ease;
+}
+
+.dp-volume-range:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.dp-volume-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #38bdf8;
+  border: 1.5px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+  transition: transform 0.1s ease;
+}
+
+.dp-volume-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.dp-volume-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #38bdf8;
+  border: 1.5px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
 }
 
 /* Option A: Ghost Ambient Scrubber (Ultra-Minimalist seeking) */
