@@ -4,24 +4,24 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:9000').r
 
 export const api = {
   async getProject(id: string): Promise<Project> {
-    if (
-      id === '2cc6c64d-a3c6-4de1-9596-2b39df9d3155' ||
-      id === 'opportunity_os_job_application' ||
-      id === 'job_application' ||
-      id === 'speedrun'
-    ) {
-      return OPPORTUNITY_OS_JOB_APPLICATION_PROJECT;
-    }
-    if (
-      id === 'ba3087e7-bb6b-420f-bbb2-2a8fc7dda9df' ||
-      id === 'proj_opportunity_os_about' ||
-      id === 'opportunity_os_about' ||
-      id === 'about'
-    ) {
-      return OPPORTUNITY_OS_ABOUT_PROJECT;
-    }
+    // 1. Fetch from backend API if available
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/projects/${id}`);
+      if (res.ok) {
+        const project = await res.json();
+        if (project && project.id) return project;
+      }
+    } catch (e) {}
 
-    // 1. Check Studio's active or saved projects in localStorage first
+    try {
+      const res = await fetch(`/api/projects/${id}`);
+      if (res.ok) {
+        const project = await res.json();
+        if (project && project.id) return project;
+      }
+    } catch (e) {}
+
+    // 2. Check Studio's active or saved projects in localStorage
     try {
       const studioProjectsRaw = localStorage.getItem('digitpop_studio_projects');
       if (studioProjectsRaw) {
@@ -36,13 +36,7 @@ export const api = {
       }
     } catch (e) {}
 
-    // 2. Fetch from backend if available
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/projects/${id}`);
-      if (res.ok) return await res.json();
-    } catch (e) {}
-
-    console.warn(`[PlayerAPI] Project ${id} not found on server or localStorage, using rich demo presentation.`);
+    console.warn(`[PlayerAPI] Project ${id} not found on server or localStorage, using rich demo fallback.`);
     return getDemoProject(id);
   },
 
@@ -262,7 +256,23 @@ export const OPPORTUNITY_OS_ABOUT_PROJECT: Project = {
           brand: 'Jeffrey Boggs',
           price: 9.99,
           currency: 'USD',
-          description: 'AI-Native Software Engineering explores a fundamental shift in how software is built now that execution has become cheap and abundant. Unlike previous technological changes, AI collapses long-standing constraints that shaped traditional engineering teams, workflows, and SDLCs, making it possible for a single individual to design, generate, validate, and operate systems that once required entire teams.\n\nDrawing from real end-to-end systems, Jeff Boggs demonstrates how modern software development is moving away from role-based execution toward system-level thinking, orchestration, and intent. This book is not about prompts or productivity tricks; it is about a new engineering archetype—the software orchestrator—who focuses on decomposition, feedback loops, and strategy while AI handles implementation. Written for senior engineers, technical leaders, and founders questioning traditional team models, AI-Native Software Engineering argues that when execution is no longer scarce, clarity of thought becomes the true competitive advantage.',
+          description: 'AI-Native Software Engineering explores a fundamental shift in how software is built now that execution has become cheap and abundant. Drawing from real end-to-end systems, Jeff Boggs demonstrates how modern software development is moving away from role-based execution toward system-level thinking, orchestration, and intent.',
+          bullets: [
+            'The Software Orchestrator Paradigm: Moving from manual syntax drafting to systems-level autonomous multi-agent loops.',
+            'Context Window Economics: Precise bounded context and deterministic execution gates.',
+            'Closed-Loop Verification: Building sandboxes where agents test, heal, and verify PRs automatically.',
+            'Multi-Agent Cognitive Routing: Parallelizing architectural tasks with specialized subagents.',
+            'Deterministic Production Gates: Eliminating nondeterministic regressions in autonomous loops.',
+          ],
+          specs: [
+            { name: 'Publisher', value: 'Boggs Systems' },
+            { name: 'Publication Date', value: 'September 2026' },
+            { name: 'Language', value: 'English' },
+            { name: 'Print Length', value: '284 pages' },
+          ],
+          rating: 4.9,
+          ratingsCount: 312,
+          isPrime: true,
           imageUrl: '/images/ai-native-software-engineering-cover.jpg',
           imageUrls: ['/images/ai-native-software-engineering-cover.jpg'],
           externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
@@ -302,6 +312,21 @@ export const OPPORTUNITY_OS_JOB_APPLICATION_PROJECT: Project = {
           price: 59.00,
           currency: 'USD',
           description: 'Autonomous AI job search, ATS portal autofill in 10ms, customized cover letter generation, and real-time candidate proof-of-work telemetry.',
+          bullets: [
+            'Instant ATS Form Autofill with 10ms Zero-Latency Field Injection',
+            'Automated Role Discovery & Keyword Matching across 500+ job boards',
+            'Tailored Multi-Agent Resume & Cover Letter Customization',
+            'Real-Time Application Pipeline Tracking & Analytics',
+            'Enterprise-Grade Security with Local Credential Storage',
+          ],
+          specs: [
+            { name: 'Platform', value: 'Web App & Chrome Extension' },
+            { name: 'Integration', value: 'Workday, Greenhouse, Lever' },
+            { name: 'License', value: 'Active Operator Plan' },
+          ],
+          rating: 5.0,
+          ratingsCount: 1850,
+          isPrime: false,
           imageUrl: '/thumbnails/opportunity-os-job-application.jpg',
           imageUrls: ['/thumbnails/opportunity-os-job-application.jpg'],
           externalUrl: 'https://opportunity-system.com/#/plans',
@@ -315,6 +340,19 @@ export const OPPORTUNITY_OS_JOB_APPLICATION_PROJECT: Project = {
           price: 9.99,
           currency: 'USD',
           description: 'The definitive manifesto on why autocomplete and chat prompts hit a hard velocity wall, and how autonomous agent loops rewrite software economics.',
+          bullets: [
+            'The Software Orchestrator Paradigm: Moving from manual syntax drafting to systems-level autonomous multi-agent loops.',
+            'Context Window Economics: Precise bounded context and deterministic execution gates.',
+            'Closed-Loop Verification: Building sandboxes where agents test, heal, and verify PRs automatically.',
+          ],
+          specs: [
+            { name: 'Publisher', value: 'Boggs Systems' },
+            { name: 'Publication Date', value: 'September 2026' },
+            { name: 'Language', value: 'English' },
+          ],
+          rating: 4.9,
+          ratingsCount: 312,
+          isPrime: true,
           imageUrl: '/images/ai-native-software-engineering-cover.jpg',
           imageUrls: ['/images/ai-native-software-engineering-cover.jpg'],
           externalUrl: 'https://www.amazon.com/dp/B0GN3G2HTQ',
@@ -328,8 +366,32 @@ export const OPPORTUNITY_OS_JOB_APPLICATION_PROJECT: Project = {
           price: 39.99,
           currency: 'USD',
           description: 'Modern minimalist RGB corner lamp featured in studio background. App & remote control, music sync, 16 million colors.',
+          bullets: [
+            '16 Million RGB Colors & 300+ Dynamic Lighting Modes',
+            'Built-in High Sensitivity Mic for Real-time Music Sync',
+            'Smart App Control via Bluetooth & 360° RF Remote Control',
+            'Space-Saving Minimalist Aluminum Corner Design (56" Height)',
+            'Timer Schedule & Sleep Automation Settings',
+          ],
+          specs: [
+            { name: 'Height', value: '56 inches' },
+            { name: 'Connectivity', value: 'Bluetooth & RF Remote' },
+            { name: 'Power', value: '12W / 12V Adapter' },
+            { name: 'Material', value: 'Aluminum & Acrylic' },
+            { name: 'Voltage', value: '12 Volts' },
+          ],
+          rating: 4.6,
+          ratingsCount: 2480,
+          isPrime: true,
           imageUrl: '/images/miortior-corner-floor-lamp.jpg',
-          imageUrls: ['/images/miortior-corner-floor-lamp.jpg'],
+          imageUrls: [
+            '/images/miortior-corner-floor-lamp.jpg',
+            '/api/images/proxy?url=' + encodeURIComponent('https://m.media-amazon.com/images/I/71il0HKYM8L._AC_SL1500_.jpg'),
+            '/api/images/proxy?url=' + encodeURIComponent('https://m.media-amazon.com/images/I/71h+c7PD3LL._AC_SL1500_.jpg'),
+            '/api/images/proxy?url=' + encodeURIComponent('https://m.media-amazon.com/images/I/71IY0A1ILaL._AC_SL1500_.jpg'),
+            '/api/images/proxy?url=' + encodeURIComponent('https://m.media-amazon.com/images/I/71QKZitCZ9L._AC_SL1500_.jpg'),
+            '/api/images/proxy?url=' + encodeURIComponent('https://m.media-amazon.com/images/I/61VhqH0QFwL._AC_SL1500_.jpg'),
+          ],
           externalUrl: 'https://www.amazon.com/dp/B0C2HDKZD7',
           checkoutType: 'AMAZON',
           buttonTextOverride: 'Buy on Amazon ($39.99)',
