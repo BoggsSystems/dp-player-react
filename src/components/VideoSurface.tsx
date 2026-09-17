@@ -317,20 +317,22 @@ export default function VideoSurface({
           {isMuted && <span className="dp-sound-label">UNMUTE</span>}
         </button>
 
-        {/* Subtle Hover-Expand Volume Slider */}
-        <div className="dp-volume-slider-box">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.02"
-            value={isMuted ? 0 : volume}
-            onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-            className="dp-volume-range"
-            aria-label="Volume Slider"
-            title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
-          />
-        </div>
+        {/* Subtle Hover-Expand Volume Slider (Only Active When Unmuted) */}
+        {!isMuted && (
+          <div className="dp-volume-slider-box">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.02"
+              value={volume}
+              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+              className="dp-volume-range"
+              aria-label="Volume Slider"
+              title={`Volume: ${Math.round(volume * 100)}%`}
+            />
+          </div>
+        )}
       </div>
 
       {/* Center Play Beacon when paused */}

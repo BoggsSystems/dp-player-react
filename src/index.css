@@ -2739,10 +2739,10 @@ html, body, #root, main, .player-container {
   z-index: 35;
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 30px;
   padding: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -2750,17 +2750,35 @@ html, body, #root, main, .player-container {
   user-select: none;
 }
 
-.dp-sound-control-wrap:hover,
-.dp-sound-control-wrap:focus-within {
-  background: rgba(15, 23, 42, 0.85);
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(56, 189, 248, 0.25);
-  padding-right: 12px;
-}
-
+/* Muted State: Pulsing UNMUTE Badge Only */
 .dp-sound-control-wrap.muted {
   animation: dpSoundPulse 2.2s infinite ease-in-out;
   border-color: rgba(255, 255, 255, 0.85);
+  padding: 4px 10px 4px 6px;
+}
+
+.dp-sound-control-wrap.muted:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: #ffffff;
+  transform: scale(1.05);
+}
+
+.dp-sound-control-wrap.muted .dp-volume-slider-box {
+  display: none !important;
+}
+
+/* Unmuted State: Compact Circular Glyph that Expands on Hover */
+.dp-sound-control-wrap.unmuted {
+  padding: 4px;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dp-sound-control-wrap.unmuted:hover,
+.dp-sound-control-wrap.unmuted:focus-within {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(56, 189, 248, 0.25);
+  padding-right: 12px;
 }
 
 @keyframes dpSoundPulse {
@@ -2778,7 +2796,7 @@ html, body, #root, main, .player-container {
   gap: 6px;
   background: transparent;
   border: none;
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-radius: 20px;
   cursor: pointer;
   color: #ffffff;
@@ -2808,23 +2826,23 @@ html, body, #root, main, .player-container {
   margin-right: 2px;
 }
 
-/* Hover-Expand Slider Track */
+/* Hover-Expand Slider Track (Only Active When Unmuted) */
 .dp-volume-slider-box {
   width: 0px;
   opacity: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
-  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
   pointer-events: none;
 }
 
-.dp-sound-control-wrap:hover .dp-volume-slider-box,
-.dp-sound-control-wrap:focus-within .dp-volume-slider-box {
+.dp-sound-control-wrap.unmuted:hover .dp-volume-slider-box,
+.dp-sound-control-wrap.unmuted:focus-within .dp-volume-slider-box {
   width: 72px;
   opacity: 1;
   pointer-events: auto;
-  margin-left: 2px;
+  margin-left: 4px;
 }
 
 .dp-volume-range {
