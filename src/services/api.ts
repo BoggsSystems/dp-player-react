@@ -31,10 +31,24 @@ function normalizeProject(project: any): Project {
   if (!project) return project;
   return {
     ...project,
-    productGroups: (project.productGroups || []).map((g: any) => ({
-      ...g,
-      products: (g.products || []).map(normalizeProduct),
-    })),
+    productGroups: (project.productGroups || []).map((g: any) => {
+      const placementProducts = (g.placements || []).map((pl: any) => normalizeProduct(pl.product)).filter(Boolean);
+      const directProducts = (g.products || []).map(normalizeProduct);
+      const seenIds = new Set<string>();
+      const unifiedProducts = [...directProducts, ...placementProducts].filter((p: any) => {
+        if (!p || !p.id || seenIds.has(p.id)) return false;
+        seenIds.add(p.id);
+        return true;
+      });
+      return {
+        ...g,
+        products: unifiedProducts,
+        placements: (g.placements || []).map((pl: any) => ({
+          ...pl,
+          product: normalizeProduct(pl.product),
+        })),
+      };
+    }),
   };
 }
 
