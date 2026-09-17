@@ -25,6 +25,11 @@ export interface Product {
   brand?: string;
   checkoutType?: CheckoutType;
   buttonTextOverride?: string;
+  bullets?: string[];
+  specs?: Array<{ name: string; value: string }>;
+  rating?: number;
+  ratingsCount?: number;
+  isPrime?: boolean;
 }
 
 export interface ProductGroup {

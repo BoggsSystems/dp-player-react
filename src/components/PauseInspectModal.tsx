@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns, ExternalLink } from 'lucide-react';
+import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns, ExternalLink, Star, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { ProductGroup, Product } from '../types';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -541,13 +541,35 @@ export default function PauseInspectModal({
       {viewState === 'Product' && selectedProduct && (
         <div className="product-inspect-grid-wrapper">
           <div className="product-inspect-details">
-            <section className="product-subtitle" title={selectedProduct.brand || productGroup.title}>
-              {selectedProduct.brand || productGroup.title || 'DigitPop Verified Item'}
-            </section>
+            <div className="product-inspect-meta-header">
+              <span className="product-subtitle" title={selectedProduct.brand || productGroup.title}>
+                {selectedProduct.brand || productGroup.title || 'DigitPop Verified Item'}
+              </span>
+              {selectedProduct.rating && (
+                <div className="product-rating-pill">
+                  <Star size={13} fill="#f59e0b" color="#f59e0b" />
+                  <span className="rating-val">{selectedProduct.rating.toFixed(1)}</span>
+                  {selectedProduct.ratingsCount && (
+                    <span className="rating-count">({selectedProduct.ratingsCount.toLocaleString()})</span>
+                  )}
+                </div>
+              )}
+            </div>
 
-            <section className="product-price">
-              ${selectedProduct.price?.toFixed(2)}
-            </section>
+            <h2 className="product-inspect-title">{selectedProduct.title}</h2>
+
+            <div className="product-price-row">
+              <span className="product-price">${selectedProduct.price?.toFixed(2)}</span>
+              {selectedProduct.compareAtPrice && selectedProduct.compareAtPrice > selectedProduct.price && (
+                <span className="product-compare-price">${selectedProduct.compareAtPrice.toFixed(2)}</span>
+              )}
+              {selectedProduct.isPrime && (
+                <span className="product-prime-badge">
+                  <ShieldCheck size={12} />
+                  <span>Prime</span>
+                </span>
+              )}
+            </div>
 
             {/* Dual Actions: Dynamic Destination & Add to Bag */}
             <div className="product-dual-actions">
@@ -597,6 +619,37 @@ export default function PauseInspectModal({
               })()}
             </div>
 
+            {/* Key Feature Highlights */}
+            {selectedProduct.bullets && selectedProduct.bullets.length > 0 && (
+              <div className="product-features-container">
+                <h4 className="product-section-heading">Key Highlights</h4>
+                <ul className="product-bullets-list">
+                  {selectedProduct.bullets.slice(0, 5).map((bullet, bIdx) => (
+                    <li key={bIdx} className="product-bullet-item">
+                      <CheckCircle2 size={15} color="#38bdf8" className="bullet-icon" />
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Technical Specifications */}
+            {selectedProduct.specs && selectedProduct.specs.length > 0 && (
+              <div className="product-specs-container">
+                <h4 className="product-section-heading">Specifications</h4>
+                <div className="product-specs-grid">
+                  {selectedProduct.specs.slice(0, 6).map((spec, sIdx) => (
+                    <div key={sIdx} className="product-spec-chip">
+                      <span className="spec-name">{spec.name}</span>
+                      <span className="spec-val">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Description Synopsis */}
             <div className="product-description-panel">
               {(selectedProduct.description || 'No extended description available for this item.')
                 .split('\n\n')
@@ -616,6 +669,14 @@ export default function PauseInspectModal({
                 onClick={() => {
                   if (productImages.length > 1) {
                     setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+                  }
+                }}
+                onError={(e) => {
+                  const img = e.currentTarget as HTMLImageElement;
+                  if (selectedProduct.imageUrl && img.src !== selectedProduct.imageUrl) {
+                    img.src = selectedProduct.imageUrl;
+                  } else {
+                    img.src = '/assets/images/placeholder-product.png';
                   }
                 }}
                 title={productImages.length > 1 ? 'Click to view next image' : undefined}
@@ -663,6 +724,9 @@ export default function PauseInspectModal({
                     alt={`Thumbnail ${idx + 1}`}
                     className={`product-thumbnail ${selectedImageIndex === idx ? 'active' : ''}`}
                     onClick={() => setSelectedImageIndex(idx)}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
                   />
                 ))}
               </div>
