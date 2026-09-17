@@ -61,9 +61,18 @@ function Player() {
 
   const streamKey = streamKeyParam || 'jeff_speedrun';
 
-  // Extract project ID from /ad/:id
-  const adMatch = pathname.match(/\/ad\/([^/]+)/);
-  const projectId = adMatch ? adMatch[1] : (queryParams.get('projectId') || 'demo-project-1');
+  // Extract project ID / slug from /v/:slug, /ad/:id, ?projectId=, or ?slug=
+  const vMatch = pathname.match(/\/v\/([^/?#]+)/);
+  const adMatch = pathname.match(/\/ad\/([^/?#]+)/);
+  const projectId = vMatch ? vMatch[1] : (adMatch ? adMatch[1] : (queryParams.get('projectId') || queryParams.get('slug') || 'demo-project-1'));
+
+  // Parse initial timestamp from ?t=11s or ?t=11
+  const tParam = queryParams.get('t');
+  const initialTimestamp = useMemo(() => {
+    if (!tParam) return null;
+    const parsed = parseFloat(tParam.replace('s', ''));
+    return isNaN(parsed) ? null : parsed;
+  }, [tParam]);
 
   // Load project data
   useEffect(() => {
@@ -239,7 +248,7 @@ function Player() {
               onTimeUpdate={handleTimeUpdate}
               onSurfaceTap={handleSurfaceTap}
               isPaused={isPaused}
-              seekTime={seekTime}
+              seekTime={seekTime ?? initialTimestamp}
             />
 
             {!isPaused && !isInspectOpen && !isAllGroupsOpen && !isDrawerOpen && (
@@ -325,7 +334,7 @@ function Player() {
             onTimeUpdate={handleTimeUpdate}
             onSurfaceTap={handleSurfaceTap}
             isPaused={isPaused}
-            seekTime={seekTime}
+            seekTime={seekTime ?? initialTimestamp}
           />
           {!isPaused && !isInspectOpen && !isAllGroupsOpen && !isDrawerOpen && (
             <div

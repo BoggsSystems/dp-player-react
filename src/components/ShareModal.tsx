@@ -39,21 +39,22 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   };
 
   const shareUrl = useMemo(() => {
-    // Determine base URL from window location or fallback
-    const base = typeof window !== 'undefined' ? window.location.href.split('#')[0].split('?')[0] : '';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://digitpop.opportunity-system.com';
+    const slug = (project as any)?.slug;
+
+    // Use compact /v/:slug if available, otherwise standard /player/?projectId=...
+    const basePath = slug ? `${origin}/v/${slug}` : `${origin}/player/`;
+
     const params = new URLSearchParams();
-    if (project?.id) {
+    if (!slug && project?.id) {
       params.set('projectId', project.id);
     }
     if (includeTimestamp && roundedSeconds > 0) {
       params.set('t', `${roundedSeconds}s`);
     }
-    if (activeProduct?.id) {
-      params.set('productId', activeProduct.id);
-    }
     const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
-  }, [project?.id, includeTimestamp, roundedSeconds, activeProduct?.id]);
+    return qs ? `${basePath}?${qs}` : basePath;
+  }, [project, includeTimestamp, roundedSeconds]);
 
   const embedCode = useMemo(() => {
     const embedUrl = shareUrl;
