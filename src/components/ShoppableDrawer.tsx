@@ -283,7 +283,7 @@ export default function ShoppableDrawer({
                             )}
 
                             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-emerald)', marginTop: '4px' }}>
-                              ${item.product.price.toFixed(2)}
+                              ${(Number(item.product.price) || 0).toFixed(2)}
                             </div>
                           </div>
 
@@ -312,7 +312,7 @@ export default function ShoppableDrawer({
                             </div>
 
                             <span style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
-                              ${(item.product.price * item.quantity).toFixed(2)}
+                              ${((Number(item.product.price) || 0) * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -336,13 +336,13 @@ export default function ShoppableDrawer({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
                     <span>Subtotal ({totalCount} {totalCount === 1 ? 'item' : 'items'})</span>
-                    <span style={{ fontFamily: 'var(--font-mono)' }}>${subtotal.toFixed(2)}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>${(Number(subtotal) || 0).toFixed(2)}</span>
                   </div>
 
                   {bundleDiscount > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)' }}>
                       <span>Bundle Discount (15%)</span>
-                      <span style={{ fontFamily: 'var(--font-mono)' }}>-${bundleDiscount.toFixed(2)}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)' }}>-${(Number(bundleDiscount) || 0).toFixed(2)}</span>
                     </div>
                   )}
 
@@ -357,7 +357,7 @@ export default function ShoppableDrawer({
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     <span>Total</span>
                     <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-emerald)' }}>
-                      ${totalPrice.toFixed(2)}
+                      ${(Number(totalPrice) || 0).toFixed(2)}
                     </span>
                   </div>
 

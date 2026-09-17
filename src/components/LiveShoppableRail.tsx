@@ -266,10 +266,10 @@ export default function LiveShoppableRail({
                       {product.title}
                     </h3>
                     <div className="live-rail-card-price-row">
-                      <span className="live-rail-card-price">${product.price.toFixed(2)}</span>
-                      {product.compareAtPrice && product.compareAtPrice > product.price && (
+                      <span className="live-rail-card-price">${(Number(product.price) || 0).toFixed(2)}</span>
+                      {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.price) && (
                         <span className="live-rail-card-compare-price">
-                          ${product.compareAtPrice.toFixed(2)}
+                          ${(Number(product.compareAtPrice) || 0).toFixed(2)}
                         </span>
                       )}
                     </div>
@@ -325,7 +325,7 @@ export default function LiveShoppableRail({
                 </span>
               </div>
               <div className="live-rail-cart-total-val">
-                ${totalPrice.toFixed(2)}
+                ${(Number(totalPrice) || 0).toFixed(2)}
               </div>
             </div>
             <button
@@ -335,7 +335,7 @@ export default function LiveShoppableRail({
             >
               <CreditCard size={15} />
               <span>
-                {isCheckingOut ? 'Redirecting...' : `CHECKOUT ($${totalPrice.toFixed(2)})`}
+                {isCheckingOut ? 'Redirecting...' : `CHECKOUT ($${(Number(totalPrice) || 0).toFixed(2)})`}
               </span>
             </button>
           </div>

@@ -1,23 +1,61 @@
-import { Project, QuizQuestion, PlayerTelemetryEvent } from '../types';
+import { Project, QuizQuestion, PlayerTelemetryEvent, Product } from '../types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:9000').replace(/\/+$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
+function normalizeProduct(p: any): Product {
+  if (!p) return p;
+  const price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
+  const compareAtPrice = p.compareAtPrice !== undefined && p.compareAtPrice !== null
+    ? (typeof p.compareAtPrice === 'number' ? p.compareAtPrice : parseFloat(p.compareAtPrice) || undefined)
+    : undefined;
+  const rating = p.rating !== undefined && p.rating !== null
+    ? (typeof p.rating === 'number' ? p.rating : parseFloat(p.rating) || undefined)
+    : undefined;
+  const ratingsCount = p.ratingsCount !== undefined && p.ratingsCount !== null
+    ? (typeof p.ratingsCount === 'number' ? p.ratingsCount : parseInt(p.ratingsCount, 10) || undefined)
+    : undefined;
+
+  return {
+    ...p,
+    price,
+    compareAtPrice,
+    rating,
+    ratingsCount,
+    bullets: Array.isArray(p.bullets) ? p.bullets : [],
+    specs: Array.isArray(p.specs) ? p.specs : [],
+    imageUrls: Array.isArray(p.imageUrls) && p.imageUrls.length > 0 ? p.imageUrls : (p.imageUrl ? [p.imageUrl] : []),
+  };
+}
+
+function normalizeProject(project: any): Project {
+  if (!project) return project;
+  return {
+    ...project,
+    productGroups: (project.productGroups || []).map((g: any) => ({
+      ...g,
+      products: (g.products || []).map(normalizeProduct),
+    })),
+  };
+}
 
 export const api = {
   async getProject(id: string): Promise<Project> {
     // 1. Fetch from backend API if available
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/projects/${id}`);
-      if (res.ok) {
-        const project = await res.json();
-        if (project && project.id) return project;
-      }
-    } catch (e) {}
+    if (API_BASE_URL) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${id}`);
+        if (res.ok) {
+          const project = await res.json();
+          if (project && project.id) return normalizeProject(project);
+        }
+      } catch (e) {}
+    }
 
     try {
       const res = await fetch(`/api/projects/${id}`);
       if (res.ok) {
         const project = await res.json();
-        if (project && project.id) return project;
+        if (project && project.id) return normalizeProject(project);
       }
     } catch (e) {}
 
@@ -27,17 +65,17 @@ export const api = {
       if (studioProjectsRaw) {
         const studioProjects: Project[] = JSON.parse(studioProjectsRaw);
         const match = studioProjects.find((p) => p.id === id);
-        if (match) return match;
+        if (match) return normalizeProject(match);
       }
       const activeProjectRaw = localStorage.getItem('digitpop_studio_project');
       if (activeProjectRaw) {
         const activeProject: Project = JSON.parse(activeProjectRaw);
-        if (activeProject.id === id) return activeProject;
+        if (activeProject.id === id) return normalizeProject(activeProject);
       }
     } catch (e) {}
 
     console.warn(`[PlayerAPI] Project ${id} not found on server or localStorage, using rich demo fallback.`);
-    return getDemoProject(id);
+    return normalizeProject(getDemoProject(id));
   },
 
   async getActiveQuizzes(): Promise<QuizQuestion[]> {

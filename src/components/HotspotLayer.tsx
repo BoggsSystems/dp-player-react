@@ -60,7 +60,7 @@ export default function HotspotLayer({
             fontWeight: 700,
           }}
         >
-          ${primaryProduct.price.toFixed(2)}
+          ${(Number(primaryProduct.price) || 0).toFixed(2)}
         </span>
       </button>
     </div>

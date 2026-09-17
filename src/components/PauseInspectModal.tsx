@@ -216,6 +216,16 @@ export default function PauseInspectModal({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const safePrice = (val: any): string => {
+    const num = typeof val === 'number' ? val : parseFloat(val);
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+  };
+
+  const safeRating = (val: any): string => {
+    const num = typeof val === 'number' ? val : parseFloat(val);
+    return isNaN(num) ? '5.0' : num.toFixed(1);
+  };
+
   const productImages = selectedProduct
     ? (selectedProduct.imageUrls && selectedProduct.imageUrls.length > 0
         ? selectedProduct.imageUrls
@@ -459,9 +469,9 @@ export default function PauseInspectModal({
                     )}
                   </div>
                   <div className="group-actions-pricing">
-                    <span className="group-bundle-price">${groupBundleTotal.toFixed(2)}</span>
+                    <span className="group-bundle-price">${safePrice(groupBundleTotal)}</span>
                     {bundleDiscountPct > 0 && (
-                      <span className="group-raw-price">${groupRawTotal.toFixed(2)}</span>
+                      <span className="group-raw-price">${safePrice(groupRawTotal)}</span>
                     )}
                   </div>
                 </div>
@@ -522,9 +532,9 @@ export default function PauseInspectModal({
                     </div>
                     <div className="product-template-footer">
                       <div className="product-template-price-col">
-                        <span className="product-template-price">${pt.price?.toFixed(2)}</span>
-                        {pt.compareAtPrice && pt.compareAtPrice > pt.price && (
-                          <span className="product-template-compare-price">${pt.compareAtPrice.toFixed(2)}</span>
+                        <span className="product-template-price">${safePrice(pt.price)}</span>
+                        {pt.compareAtPrice && Number(pt.compareAtPrice) > Number(pt.price || 0) && (
+                          <span className="product-template-compare-price">${safePrice(pt.compareAtPrice)}</span>
                         )}
                       </div>
                       <span className="product-template-action">Inspect</span>
@@ -548,9 +558,9 @@ export default function PauseInspectModal({
               {selectedProduct.rating && (
                 <div className="product-rating-pill">
                   <Star size={13} fill="#f59e0b" color="#f59e0b" />
-                  <span className="rating-val">{selectedProduct.rating.toFixed(1)}</span>
+                  <span className="rating-val">{safeRating(selectedProduct.rating)}</span>
                   {selectedProduct.ratingsCount && (
-                    <span className="rating-count">({selectedProduct.ratingsCount.toLocaleString()})</span>
+                    <span className="rating-count">({Number(selectedProduct.ratingsCount).toLocaleString()})</span>
                   )}
                 </div>
               )}
@@ -559,9 +569,9 @@ export default function PauseInspectModal({
             <h2 className="product-inspect-title">{selectedProduct.title}</h2>
 
             <div className="product-price-row">
-              <span className="product-price">${selectedProduct.price?.toFixed(2)}</span>
-              {selectedProduct.compareAtPrice && selectedProduct.compareAtPrice > selectedProduct.price && (
-                <span className="product-compare-price">${selectedProduct.compareAtPrice.toFixed(2)}</span>
+              <span className="product-price">${safePrice(selectedProduct.price)}</span>
+              {selectedProduct.compareAtPrice && Number(selectedProduct.compareAtPrice) > Number(selectedProduct.price || 0) && (
+                <span className="product-compare-price">${safePrice(selectedProduct.compareAtPrice)}</span>
               )}
               {selectedProduct.isPrime && (
                 <span className="product-prime-badge">
@@ -803,11 +813,11 @@ export default function PauseInspectModal({
                         </div>
                         <div className="cart-item-price-row">
                           <span className="cart-item-price">
-                            ${item.product.price ? item.product.price.toFixed(2) : '0.00'}
+                            ${safePrice(item.product.price)}
                           </span>
-                          {item.product.compareAtPrice && item.product.compareAtPrice > (item.product.price || 0) && (
+                          {item.product.compareAtPrice && Number(item.product.compareAtPrice) > Number(item.product.price || 0) && (
                             <span className="cart-item-compare-price">
-                              ${item.product.compareAtPrice.toFixed(2)}
+                              ${safePrice(item.product.compareAtPrice)}
                             </span>
                           )}
                         </div>
@@ -857,13 +867,13 @@ export default function PauseInspectModal({
 
               <div className="cart-summary-row">
                 <span>Subtotal ({totalCount} item{totalCount === 1 ? '' : 's'})</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>${safePrice(subtotal)}</span>
               </div>
 
               {bundleDiscount > 0 && (
                 <div className="cart-summary-row cart-discount-row">
                   <span>Bundle Savings (15%)</span>
-                  <span>-${bundleDiscount.toFixed(2)}</span>
+                  <span>-${safePrice(bundleDiscount)}</span>
                 </div>
               )}
 
@@ -874,9 +884,9 @@ export default function PauseInspectModal({
 
               <div className="cart-summary-divider" />
 
-              <div className="cart-summary-total-row">
-                <span>Total</span>
-                <span className="cart-total-amount">${totalPrice.toFixed(2)}</span>
+              <div className="cart-summary-row cart-total-row">
+                <span>Estimated Total</span>
+                <span className="cart-total-amount">${safePrice(totalPrice)}</span>
               </div>
 
               <button
