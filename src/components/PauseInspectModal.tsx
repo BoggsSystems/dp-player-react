@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns, ExternalLink, Star, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { ProductGroup, Product } from '../types';
+import { Play, Volume2, VolumeX, Compass, ChevronLeft, ChevronRight, Layers, ArrowUp, X, CreditCard, ShoppingBag, Zap, Check, Plus, Minus, Trash2, Columns, ExternalLink, Star, ShieldCheck, CheckCircle2, Share2 } from 'lucide-react';
+import { ProductGroup, Product, Project } from '../types';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { ShareModal } from './ShareModal';
 
 interface PauseInspectModalProps {
   isOpen: boolean;
   onResume: () => void;
   onResumeToSplit?: () => void;
+  project?: Project | null;
+  currentTime?: number;
   productGroup: ProductGroup | null;
   allGroups?: ProductGroup[];
   initialProduct?: Product | null;
@@ -24,6 +27,8 @@ export default function PauseInspectModal({
   isOpen,
   onResume,
   onResumeToSplit,
+  project,
+  currentTime,
   productGroup,
   allGroups = [],
   initialProduct = null,
@@ -53,6 +58,7 @@ export default function PauseInspectModal({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -425,6 +431,19 @@ export default function PauseInspectModal({
             </button>
           )}
 
+          {/* Share Shoppable Video Button */}
+          <button
+            type="button"
+            onClick={() => setShowShareModal(true)}
+            className="button-share-grid button-base"
+            title="Share Video & Products"
+          >
+            <div className="btn-disc">
+              <Share2 size={19} strokeWidth={2} color="#ffffff" />
+            </div>
+            <span className="btn-label">Share</span>
+          </button>
+
           {/* Close HUD Button */}
           <button
             type="button"
@@ -624,6 +643,37 @@ export default function PauseInspectModal({
                         <span>+ ADD TO BAG</span>
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      className="product-share-btn"
+                      onClick={() => setShowShareModal(true)}
+                      title="Share this product"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '10px 16px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '10px',
+                        color: '#f8fafc',
+                        fontWeight: 600,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.16)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                      }}
+                    >
+                      <Share2 size={15} />
+                      <span>Share Item</span>
+                    </button>
                   </>
                 );
               })()}
@@ -913,6 +963,15 @@ export default function PauseInspectModal({
           </div>
         </div>
       )}
+
+      {/* Social Media Sharing & Embed Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        project={project}
+        currentTime={currentTime !== undefined ? currentTime : productGroup.timestampSeconds}
+        activeProduct={selectedProduct}
+      />
     </div>
   );
 }

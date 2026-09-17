@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Share2 } from 'lucide-react';
 import VideoSurface from './components/VideoSurface';
 import LiveBadge from './components/LiveBadge';
 import ShoppableDrawer from './components/ShoppableDrawer';
 import PauseInspectModal from './components/PauseInspectModal';
 import AllGroupsModal from './components/AllGroupsModal';
 import LiveShoppableRail from './components/LiveShoppableRail';
+import { ShareModal } from './components/ShareModal';
 import { useWebSocketStream } from './hooks/useWebSocketStream';
 import { Project, ProductGroup, ViewingMode, Product } from './types';
 import { api } from './services/api';
@@ -17,6 +18,7 @@ function Player() {
   const [activeGroup, setActiveGroup] = useState<ProductGroup | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isInspectOpen, setIsInspectOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [inspectProduct, setInspectProduct] = useState<Product | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
@@ -276,15 +278,44 @@ function Player() {
       ) : (
         <div className="player-immersive-layout" style={{ position: 'relative', width: '100%', height: '100%' }}>
           {isLive && <LiveBadge />}
-          <button
-            type="button"
-            className="btn-float-shop"
-            onClick={() => handleModeChange('SPLIT_PANEL')}
-            title="Open Co-Pilot Shopping Rail"
-          >
-            <ShoppingBag size={15} />
-            <span>Shop</span>
-          </button>
+          <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10, display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              className="btn-float-share"
+              onClick={() => setIsShareOpen(true)}
+              title="Share Video & Deals"
+              style={{
+                background: 'rgba(2, 6, 23, 0.75)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '20px',
+                color: '#ffffff',
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Share2 size={14} color="#38bdf8" />
+              <span>Share</span>
+            </button>
+            <button
+              type="button"
+              className="btn-float-shop"
+              onClick={() => handleModeChange('SPLIT_PANEL')}
+              title="Open Co-Pilot Shopping Rail"
+              style={{ position: 'static' }}
+            >
+              <ShoppingBag size={15} />
+              <span>Shop</span>
+            </button>
+          </div>
           <VideoSurface
             src={videoSourceUrl}
             isLive={isLive}
@@ -338,6 +369,8 @@ function Player() {
           handleModeChange('SPLIT_PANEL');
           handleResumeFromInspect();
         }}
+        project={project}
+        currentTime={currentTime}
         productGroup={activeGroup}
         allGroups={project?.productGroups || []}
         initialProduct={inspectProduct}
@@ -356,6 +389,15 @@ function Player() {
         activeGroupId={activeGroup?.id}
         onSeekAndPlay={handleSeekAndPlay}
         onSelectGroup={(g) => setActiveGroup(g)}
+      />
+
+      {/* Interactive Social Media Sharing & Embed Modal */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        project={project}
+        currentTime={currentTime}
+        activeProduct={inspectProduct || activeGroup?.products?.[0]}
       />
     </main>
   );
