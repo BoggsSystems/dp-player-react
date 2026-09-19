@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { ShoppingBag, Share2 } from 'lucide-react';
+import { ShoppingBag, Share2, Volume2, VolumeX } from 'lucide-react';
 import VideoSurface from './components/VideoSurface';
+import ShortsVideoSurface from './components/ShortsVideoSurface';
+import ShortsShoppableDrawer from './components/ShortsShoppableDrawer';
 import LiveBadge from './components/LiveBadge';
 import ShoppableDrawer from './components/ShoppableDrawer';
 import PauseInspectModal from './components/PauseInspectModal';
@@ -215,12 +217,45 @@ function Player() {
     setTimeout(() => setSeekTime(null), 100);
   };
 
+  const isShort = useMemo(() => {
+    return Boolean(
+      queryParams.get('mode') === 'short' ||
+      queryParams.get('format') === 'short' ||
+      queryParams.get('aspect') === '9:16' ||
+      project?.isShort ||
+      project?.aspectRatio === '9:16'
+    );
+  }, [queryParams, project]);
+
+  const featuredShortProduct = useMemo(() => {
+    if (project?.productTitle) {
+      return {
+        id: 'short-featured-prod',
+        title: project.productTitle,
+        price: project.productPrice ?? 19.99,
+        imageUrl: project.productImageUrl,
+        externalUrl: project.productBuyUrl,
+      } as Product;
+    }
+    if (activeGroup?.products && activeGroup.products.length > 0) {
+      return activeGroup.products[0];
+    }
+    if (project?.productGroups && project.productGroups.length > 0 && project.productGroups[0].products?.length > 0) {
+      return project.productGroups[0].products[0];
+    }
+    return null;
+  }, [project, activeGroup]);
+
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
   };
 
   // Determine media source URL
   const videoSourceUrl = useMemo(() => {
+    const customVideoUrl = queryParams.get('videoUrl');
+    if (customVideoUrl) {
+      return customVideoUrl;
+    }
     if (isLive) {
       return `http://${window.location.hostname || 'localhost'}:8080/live/${streamKey}.m3u8`;
     }
@@ -229,12 +264,116 @@ function Player() {
       project?.hlsManifestUrl ||
       'https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev/vods/demo_presentation.mp4'
     );
-  }, [isLive, streamKey, project]);
+  }, [isLive, streamKey, project, queryParams]);
 
   return (
     <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000' }}>
       {/* Main Player Surface */}
-      {viewMode === 'SPLIT_PANEL' ? (
+      {isShort ? (
+        <div className="player-shorts-layout" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+          {/* Top Bar: Floating Unmute & Share Buttons */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              left: '16px',
+              right: '16px',
+              zIndex: 50,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            <div style={{ pointerEvents: 'auto' }}>
+              <button
+                type="button"
+                onClick={toggleMute}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.65)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  borderRadius: '20px',
+                  color: '#fff',
+                  padding: '6px 12px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                }}
+              >
+                {isMuted ? <VolumeX size={14} color="#FFB800" /> : <Volume2 size={14} color="#10b981" />}
+                <span>{isMuted ? 'UNMUTE' : 'SOUND ON'}</span>
+              </button>
+            </div>
+
+            <div style={{ pointerEvents: 'auto', display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setIsShareOpen(true)}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.65)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  borderRadius: '20px',
+                  color: '#fff',
+                  padding: '6px 12px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                }}
+              >
+                <Share2 size={14} color="#38bdf8" />
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 9:16 Shorts Video Surface with Kinetic Captions & Fit-Blur */}
+          <ShortsVideoSurface
+            src={videoSourceUrl}
+            autoplay
+            muted={isMuted}
+            onMuteToggle={(m) => setIsMuted(m)}
+            onTimeUpdate={handleTimeUpdate}
+            onSurfaceTap={handleSurfaceTap}
+            isPaused={isPaused}
+            seekTime={seekTime ?? initialTimestamp}
+            layoutMode={project?.layoutMode || 'FIT_BLUR'}
+            words={project?.words || []}
+            highlightColor={project?.highlightColor || 'AMBER'}
+            fontSize={project?.fontSize || 30}
+            verticalPosition={project?.verticalPosition || 74}
+            showQrCode={project?.showQrCode}
+            qrPlacement={project?.qrPlacement}
+            qrCustomUrl={project?.qrCustomUrl}
+            productPrice={featuredShortProduct?.price}
+          />
+
+          {/* Pinned Lower-Third 1-Click Buy Drawer */}
+          {featuredShortProduct && (
+            <ShortsShoppableDrawer
+              product={featuredShortProduct}
+              onBuy={(p) => {
+                if (p.externalUrl) {
+                  window.open(p.externalUrl, '_blank', 'noopener,noreferrer');
+                } else {
+                  handleInspectProduct(p);
+                }
+              }}
+            />
+          )}
+        </div>
+      ) : viewMode === 'SPLIT_PANEL' ? (
         <div className="player-split-layout">
           {/* Left Split: Video Surface */}
           <div className="split-video-pane">

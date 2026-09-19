@@ -48,6 +48,14 @@ export interface ProductGroup {
   hotspotY?: number; // percentage 0-100
 }
 
+export interface SubtitleWord {
+  id: string;
+  word: string;
+  start: number;
+  end: number;
+  confidence?: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -58,6 +66,22 @@ export interface Project {
   durationSeconds?: number;
   productGroups?: ProductGroup[];
   isActive?: boolean;
+  isShort?: boolean;
+  aspectRatio?: '16:9' | '9:16';
+  words?: SubtitleWord[];
+  editableTranscript?: string;
+  highlightColor?: string;
+  fontSize?: number;
+  verticalPosition?: number;
+  layoutMode?: 'FIT_BLUR' | 'COVER_CROP';
+  showShoppableDrawer?: boolean;
+  showQrCode?: boolean;
+  qrPlacement?: 'TOP_RIGHT' | 'TOP_LEFT' | 'BOTTOM_RIGHT';
+  qrCustomUrl?: string;
+  productTitle?: string;
+  productPrice?: number;
+  productImageUrl?: string;
+  productBuyUrl?: string;
 }
 
 export interface QuizQuestion {
