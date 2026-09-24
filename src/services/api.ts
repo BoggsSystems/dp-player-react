@@ -29,8 +29,19 @@ function normalizeProduct(p: any): Product {
 
 function normalizeProject(project: any): Project {
   if (!project) return project;
+  const meta = (project.metadata as any) || {};
+
   return {
     ...project,
+    words: project.words || meta.transcript || [],
+    highlightColor: project.highlightColor || meta.highlightColor || 'AMBER',
+    fontSize: project.fontSize ?? meta.fontSize ?? 32,
+    verticalPosition: project.verticalPosition ?? meta.verticalPosition ?? 75,
+    layoutMode: project.layoutMode || meta.layoutMode || 'FIT_BLUR',
+    showQrCode: project.showQrCode ?? meta.showQrCode ?? true,
+    qrPlacement: project.qrPlacement || meta.qrPlacement || 'TOP_RIGHT',
+    qrCustomUrl: project.qrCustomUrl || meta.qrCustomUrl,
+    showShoppableDrawer: project.showShoppableDrawer ?? meta.showShoppableDrawer ?? true,
     productGroups: (project.productGroups || []).map((g: any) => {
       const placementProducts = (g.placements || []).map((pl: any) => normalizeProduct(pl.product)).filter(Boolean);
       const directProducts = (g.products || []).map(normalizeProduct);

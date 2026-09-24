@@ -7,8 +7,18 @@ export const HIGHLIGHT_COLORS: Record<string, { hex: string; glow: string; name:
   CYAN: { hex: '#00F0FF', glow: 'rgba(0,240,255,0.6)', name: 'Cyber Cyan' },
   LIME: { hex: '#39FF14', glow: 'rgba(57,255,20,0.6)', name: 'Electric Lime' },
   PINK: { hex: '#FF007F', glow: 'rgba(255,0,127,0.6)', name: 'Hot Pink' },
+  ORANGE: { hex: '#F97316', glow: 'rgba(249,115,22,0.6)', name: 'Sunset Orange' },
+  VIOLET: { hex: '#8B5CF6', glow: 'rgba(139,92,246,0.6)', name: 'Neon Violet' },
   WHITE: { hex: '#FFFFFF', glow: 'rgba(255,255,255,0.6)', name: 'Pure White' },
   EMERALD: { hex: '#10b981', glow: 'rgba(16,185,129,0.6)', name: 'Emerald' },
+  amber: { hex: '#FFB800', glow: 'rgba(255,184,0,0.6)', name: 'Neon Amber' },
+  cyan: { hex: '#00F0FF', glow: 'rgba(0,240,255,0.6)', name: 'Cyber Cyan' },
+  lime: { hex: '#39FF14', glow: 'rgba(57,255,20,0.6)', name: 'Electric Lime' },
+  pink: { hex: '#FF007F', glow: 'rgba(255,0,127,0.6)', name: 'Hot Pink' },
+  orange: { hex: '#F97316', glow: 'rgba(249,115,22,0.6)', name: 'Sunset Orange' },
+  violet: { hex: '#8B5CF6', glow: 'rgba(139,92,246,0.6)', name: 'Neon Violet' },
+  white: { hex: '#FFFFFF', glow: 'rgba(255,255,255,0.6)', name: 'Pure White' },
+  emerald: { hex: '#10b981', glow: 'rgba(16,185,129,0.6)', name: 'Emerald' },
 };
 
 interface ShortsVideoSurfaceProps {
@@ -147,34 +157,14 @@ export default function ShortsVideoSurface({
       }}
       onClick={handleTap}
     >
-      {/* 1. Blurred Backdrop for 16:9 to 9:16 Aspect Ratio Fit */}
-      {layoutMode === 'FIT_BLUR' && src && (
-        <video
-          src={src}
-          muted
-          autoPlay
-          loop
-          playsInline
-          style={{
-            position: 'absolute',
-            inset: '-20px',
-            width: 'calc(100% + 40px)',
-            height: 'calc(100% + 40px)',
-            objectFit: 'cover',
-            filter: 'blur(28px) brightness(0.35)',
-            pointerEvents: 'none',
-            zIndex: 1,
-          }}
-        />
-      )}
-
-      {/* 2. Main High-Definition Video Surface */}
+      {/* Main High-Definition Video Surface */}
       <video
         ref={videoRef}
         src={src}
         autoPlay={autoplay}
         muted={muted}
         playsInline
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => {
