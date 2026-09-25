@@ -8,6 +8,9 @@ interface ShortsShoppableDrawerProps {
   includedProducts?: Product[];
   rotationSpeed?: number;
   onBuy?: (product: Product) => void;
+  onInspect?: (product: Product) => void;
+  isDesktopExpanded?: boolean;
+  onToggleDesktopExpand?: () => void;
 }
 
 export default function ShortsShoppableDrawer({
@@ -16,6 +19,9 @@ export default function ShortsShoppableDrawer({
   includedProducts = [],
   rotationSpeed = 8,
   onBuy,
+  onInspect,
+  isDesktopExpanded = false,
+  onToggleDesktopExpand,
 }: ShortsShoppableDrawerProps) {
   // Normalize effective carousel products list
   const activeProducts = useMemo<Product[]>(() => {
@@ -53,7 +59,10 @@ export default function ShortsShoppableDrawer({
 
   const handleDrawerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (allCatalogProducts.length > 1) {
+    // On desktop/tablet, toggle the expanded side-by-side shopping pane
+    if (window.innerWidth >= 768 && onToggleDesktopExpand) {
+      onToggleDesktopExpand();
+    } else if (allCatalogProducts.length > 1) {
       setIsCatalogOpen(true);
     } else {
       onBuy?.(currentProduct);

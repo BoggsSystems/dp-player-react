@@ -382,114 +382,252 @@ function Player() {
     );
   }, [isLive, streamKey, project, queryParams]);
 
+  // State for Desktop & Tablet Adaptive Side-by-Side Shopping Mode
+  const [isDesktopShortShopOpen, setIsDesktopShortShopOpen] = useState(false);
+
   return (
     <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000' }}>
       {/* Main Player Surface */}
       {isShort ? (
-        <div className="player-shorts-layout" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-          {/* Top Bar: Floating Unmute & Share Buttons */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '16px',
-              left: '16px',
-              right: '16px',
-              zIndex: 50,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              pointerEvents: 'none',
-            }}
-          >
-            <div style={{ pointerEvents: 'auto' }}>
-              <button
-                type="button"
-                onClick={toggleMute}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.65)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  borderRadius: '20px',
-                  color: '#fff',
-                  padding: '6px 12px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                }}
-              >
-                {isMuted ? <VolumeX size={14} color="#FFB800" /> : <Volume2 size={14} color="#10b981" />}
-                <span>{isMuted ? 'UNMUTE' : 'SOUND ON'}</span>
-              </button>
+        <div className={`player-shorts-layout ${isDesktopShortShopOpen ? 'desktop-expanded' : ''}`}>
+          {/* Left / Center Video Stage */}
+          <div className="shorts-video-stage">
+            {/* Top Bar: Floating Unmute & Share Buttons */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '16px',
+                left: '16px',
+                right: '16px',
+                zIndex: 50,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                pointerEvents: 'none',
+              }}
+            >
+              <div style={{ pointerEvents: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    borderRadius: '20px',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  {isMuted ? <VolumeX size={14} color="#FFB800" /> : <Volume2 size={14} color="#10b981" />}
+                  <span>{isMuted ? 'UNMUTE' : 'SOUND ON'}</span>
+                </button>
+              </div>
+
+              <div style={{ pointerEvents: 'auto', display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsDesktopShortShopOpen((prev) => !prev)}
+                  style={{
+                    background: isDesktopShortShopOpen ? 'rgba(255, 184, 0, 0.25)' : 'rgba(0, 0, 0, 0.65)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: isDesktopShortShopOpen ? '1px solid #FFB800' : '1px solid rgba(255, 255, 255, 0.25)',
+                    borderRadius: '20px',
+                    color: isDesktopShortShopOpen ? '#FFB800' : '#fff',
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  }}
+                  title="Toggle Desktop Shoppable Products Panel"
+                >
+                  <ShoppingBag size={14} color={isDesktopShortShopOpen ? '#FFB800' : '#38bdf8'} />
+                  <span>{isDesktopShortShopOpen ? 'Close Shop' : 'Shop'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsShareOpen(true)}
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    borderRadius: '20px',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <Share2 size={14} color="#38bdf8" />
+                  <span>Share</span>
+                </button>
+              </div>
             </div>
 
-            <div style={{ pointerEvents: 'auto', display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => setIsShareOpen(true)}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.65)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  borderRadius: '20px',
-                  color: '#fff',
-                  padding: '6px 12px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            {/* 9:16 Shorts Video Surface with Kinetic Captions & Fit-Blur */}
+            <ShortsVideoSurface
+              src={videoSourceUrl}
+              autoplay
+              muted={isMuted}
+              onMuteToggle={(m) => setIsMuted(m)}
+              onTimeUpdate={handleTimeUpdate}
+              onSurfaceTap={handleSurfaceTap}
+              isPaused={isPaused}
+              seekTime={seekTime ?? initialTimestamp}
+              layoutMode={project?.layoutMode || 'FIT_BLUR'}
+              words={project?.words || []}
+              highlightColor={project?.highlightColor || 'AMBER'}
+              fontSize={project?.fontSize || 30}
+              verticalPosition={project?.verticalPosition || 74}
+              showQrCode={project?.showQrCode}
+              qrPlacement={project?.qrPlacement}
+              qrCustomUrl={project?.qrCustomUrl}
+              productPrice={featuredShortProduct?.price}
+            />
+
+            {/* Mobile & Drawer Carousel (shown when desktop side-panel is closed) */}
+            {!isDesktopShortShopOpen && (featuredShortProduct || shortCarouselProducts.length > 0 || shortIncludedProducts.length > 0) && (
+              <ShortsShoppableDrawer
+                product={featuredShortProduct}
+                carouselProducts={shortCarouselProducts}
+                includedProducts={shortIncludedProducts}
+                rotationSpeed={project?.carouselRotationSpeed ?? 8}
+                isDesktopExpanded={isDesktopShortShopOpen}
+                onToggleDesktopExpand={() => setIsDesktopShortShopOpen(true)}
+                onBuy={(p) => {
+                  if (p.externalUrl) {
+                    window.open(p.externalUrl, '_blank', 'noopener,noreferrer');
+                  } else {
+                    handleInspectProduct(p);
+                  }
                 }}
-              >
-                <Share2 size={14} color="#38bdf8" />
-                <span>Share</span>
-              </button>
-            </div>
+              />
+            )}
           </div>
 
-          {/* 9:16 Shorts Video Surface with Kinetic Captions & Fit-Blur */}
-          <ShortsVideoSurface
-            src={videoSourceUrl}
-            autoplay
-            muted={isMuted}
-            onMuteToggle={(m) => setIsMuted(m)}
-            onTimeUpdate={handleTimeUpdate}
-            onSurfaceTap={handleSurfaceTap}
-            isPaused={isPaused}
-            seekTime={seekTime ?? initialTimestamp}
-            layoutMode={project?.layoutMode || 'FIT_BLUR'}
-            words={project?.words || []}
-            highlightColor={project?.highlightColor || 'AMBER'}
-            fontSize={project?.fontSize || 30}
-            verticalPosition={project?.verticalPosition || 74}
-            showQrCode={project?.showQrCode}
-            qrPlacement={project?.qrPlacement}
-            qrCustomUrl={project?.qrCustomUrl}
-            productPrice={featuredShortProduct?.price}
-          />
+          {/* Desktop & Tablet Adaptive Shopping Co-Pilot Rail */}
+          {isDesktopShortShopOpen && (
+            <aside className="shorts-desktop-shop-rail">
+              <div className="shorts-desktop-shop-header">
+                <div>
+                  <h2 className="shorts-desktop-shop-title">
+                    <ShoppingBag size={22} color="#FFB800" />
+                    <span>Interactive Shoppable Collection</span>
+                  </h2>
+                  <p className="shorts-desktop-shop-subtitle">
+                    Featured products tagged directly in this video clip ({allAvailableProducts.length} items)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDesktopShortShopOpen(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title="Close Shopping View"
+                >
+                  ✕
+                </button>
+              </div>
 
-          {/* Two-Tier Rotating Hero Carousel Drawer */}
-          {(featuredShortProduct || shortCarouselProducts.length > 0 || shortIncludedProducts.length > 0) && (
-            <ShortsShoppableDrawer
-              product={featuredShortProduct}
-              carouselProducts={shortCarouselProducts}
-              includedProducts={shortIncludedProducts}
-              rotationSpeed={project?.carouselRotationSpeed ?? 8}
-              onBuy={(p) => {
-                if (p.externalUrl) {
-                  window.open(p.externalUrl, '_blank', 'noopener,noreferrer');
-                } else {
-                  handleInspectProduct(p);
-                }
-              }}
-            />
+              <div className="shorts-desktop-products-grid">
+                {allAvailableProducts.map((prod) => (
+                  <article
+                    key={prod.id}
+                    className="shorts-desktop-product-card"
+                    onClick={() => handleInspectProduct(prod)}
+                  >
+                    <div className="shorts-desktop-card-top">
+                      {prod.imageUrl && (
+                        <img
+                          src={prod.imageUrl}
+                          alt={prod.title}
+                          className="shorts-desktop-card-thumb"
+                        />
+                      )}
+                      <div className="shorts-desktop-card-info">
+                        <h3 className="shorts-desktop-card-title">{prod.title}</h3>
+                        <div className="shorts-desktop-card-price">
+                          ${typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
+                        </div>
+                      </div>
+                    </div>
+
+                    {prod.description && (
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: '#94a3b8',
+                          lineHeight: 1.45,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {prod.description}
+                      </p>
+                    )}
+
+                    <div className="shorts-desktop-card-actions">
+                      <button
+                        type="button"
+                        className="btn-shorts-desktop-buy"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (prod.externalUrl) {
+                            window.open(prod.externalUrl, '_blank', 'noopener,noreferrer');
+                          } else {
+                            handleInspectProduct(prod);
+                          }
+                        }}
+                      >
+                        ⚡ 1-Click Buy
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-shorts-desktop-inspect"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInspectProduct(prod);
+                        }}
+                      >
+                        Inspect
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </aside>
           )}
         </div>
       ) : viewMode === 'SPLIT_PANEL' ? (
