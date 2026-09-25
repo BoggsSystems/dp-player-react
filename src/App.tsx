@@ -300,12 +300,17 @@ function Player() {
       }
     }
 
-    // 3. Fallback to workspace catalog items if still empty
-    if (list.length === 0) {
-      const defaultGroup = OPPORTUNITY_OS_JOB_APPLICATION_PROJECT.productGroups?.[0] || OPPORTUNITY_OS_ABOUT_PROJECT.productGroups?.[0];
-      if (defaultGroup && defaultGroup.products) {
-        for (const prod of defaultGroup.products) {
-          addProduct(prod);
+    // 3. Fallback: If fewer than 3 products, enrich with workspace catalog items so rotation is always active
+    if (list.length < 3) {
+      const demoGroups = [
+        ...(OPPORTUNITY_OS_JOB_APPLICATION_PROJECT.productGroups || []),
+        ...(OPPORTUNITY_OS_ABOUT_PROJECT.productGroups || []),
+      ];
+      for (const grp of demoGroups) {
+        if (grp.products) {
+          for (const prod of grp.products) {
+            addProduct(prod);
+          }
         }
       }
     }
@@ -383,7 +388,23 @@ function Player() {
   }, [isLive, streamKey, project, queryParams]);
 
   // State for Desktop & Tablet Adaptive Side-by-Side Shopping Mode
-  const [isDesktopShortShopOpen, setIsDesktopShortShopOpen] = useState(false);
+  const [isDesktopShortShopOpen, setIsDesktopShortShopOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const expandParam = queryParams.get('expand') || queryParams.get('shop') || queryParams.get('autoExpand');
+    if (expandParam === 'true' || expandParam === '1') return true;
+    return window.innerWidth >= 768;
+  });
+
+  // Notify parent window / embed.js on expand state change
+  useEffect(() => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'DIGITPOP_EXPAND_CHANGE',
+        isExpanded: isDesktopShortShopOpen,
+        projectId: project?.id,
+      }, '*');
+    }
+  }, [isDesktopShortShopOpen, project?.id]);
 
   return (
     <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000' }}>
