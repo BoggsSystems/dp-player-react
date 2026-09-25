@@ -11,7 +11,7 @@ import LiveShoppableRail from './components/LiveShoppableRail';
 import { ShareModal } from './components/ShareModal';
 import { useWebSocketStream } from './hooks/useWebSocketStream';
 import { Project, ProductGroup, ViewingMode, Product } from './types';
-import { api, OPPORTUNITY_OS_ABOUT_PROJECT } from './services/api';
+import { api, OPPORTUNITY_OS_ABOUT_PROJECT, OPPORTUNITY_OS_JOB_APPLICATION_PROJECT } from './services/api';
 import { CartProvider, useCart } from './context/CartContext';
 
 function Player() {
@@ -227,12 +227,101 @@ function Player() {
     );
   }, [queryParams, project]);
 
+  // Catalog pool for product lookup and auto-resolution
+  const catalogLookup = useMemo<Map<string, Product>>(() => {
+    const map = new Map<string, Product>();
+    // Index demo/standard project catalog items
+    const demoGroups = [
+      ...(OPPORTUNITY_OS_JOB_APPLICATION_PROJECT.productGroups || []),
+      ...(OPPORTUNITY_OS_ABOUT_PROJECT.productGroups || []),
+    ];
+    for (const group of demoGroups) {
+      if (group.products) {
+        for (const prod of group.products) {
+          if (prod && prod.id) {
+            map.set(prod.id, prod);
+            map.set(prod.title.toLowerCase(), prod);
+          }
+        }
+      }
+    }
+    // Also index project-level products if available
+    if (project?.productGroups) {
+      for (const group of project.productGroups) {
+        if (group.products) {
+          for (const prod of group.products) {
+            if (prod && prod.id) {
+              map.set(prod.id, prod);
+              map.set(prod.title.toLowerCase(), prod);
+            }
+          }
+        }
+      }
+    }
+    return map;
+  }, [project]);
+
+  // Unified list of all products belonging to this project / workspace
+  const allAvailableProducts = useMemo<Product[]>(() => {
+    const list: Product[] = [];
+    const seen = new Set<string>();
+
+    const addProduct = (prod: Product | null | undefined) => {
+      if (!prod || !prod.id || seen.has(prod.id)) return;
+      seen.add(prod.id);
+      list.push(prod);
+    };
+
+    // 1. Products from canonical product groups attached to the project
+    if (project?.productGroups) {
+      for (const group of project.productGroups) {
+        if (group.products) {
+          for (const prod of group.products) {
+            addProduct(prod);
+          }
+        }
+      }
+    }
+
+    // 2. If project has a specific productTitle or productId, resolve it from catalog or add it
+    if (project?.productTitle || (project as any)?.productId) {
+      const matchKey = (project as any)?.productId || project?.productTitle?.toLowerCase();
+      const matched = matchKey ? catalogLookup.get(matchKey) : null;
+      if (matched) {
+        addProduct(matched);
+      } else if (project?.productTitle) {
+        addProduct({
+          id: (project as any)?.productId || 'short-featured-prod',
+          title: project.productTitle,
+          price: project.productPrice ?? 0,
+          imageUrl: project.productImageUrl,
+          externalUrl: project.productBuyUrl,
+        } as Product);
+      }
+    }
+
+    // 3. Fallback to workspace catalog items if still empty
+    if (list.length === 0) {
+      const defaultGroup = OPPORTUNITY_OS_JOB_APPLICATION_PROJECT.productGroups?.[0] || OPPORTUNITY_OS_ABOUT_PROJECT.productGroups?.[0];
+      if (defaultGroup && defaultGroup.products) {
+        for (const prod of defaultGroup.products) {
+          addProduct(prod);
+        }
+      }
+    }
+
+    return list;
+  }, [project, catalogLookup]);
+
   const featuredShortProduct = useMemo(() => {
     if (project?.productTitle) {
+      const match = catalogLookup.get(project.productTitle.toLowerCase()) || 
+                    ((project as any)?.productId ? catalogLookup.get((project as any).productId) : null);
+      if (match) return match;
       return {
-        id: 'short-featured-prod',
+        id: (project as any)?.productId || 'short-featured-prod',
         title: project.productTitle,
-        price: project.productPrice ?? 19.99,
+        price: project.productPrice ?? 0,
         imageUrl: project.productImageUrl,
         externalUrl: project.productBuyUrl,
       } as Product;
@@ -240,79 +329,38 @@ function Player() {
     if (activeGroup?.products && activeGroup.products.length > 0) {
       return activeGroup.products[0];
     }
-    if (project?.productGroups && project.productGroups.length > 0 && project.productGroups[0].products?.length > 0) {
-      return project.productGroups[0].products[0];
+    if (allAvailableProducts.length > 0) {
+      return allAvailableProducts[0];
     }
     return null;
-  }, [project, activeGroup]);
-
-  // Unified list of all products belonging to this project / workspace
-  const allAvailableProducts = useMemo<Product[]>(() => {
-    const list: Product[] = [];
-    const seen = new Set<string>();
-
-    if (project?.productTitle) {
-      list.push({
-        id: 'short-featured-prod',
-        title: project.productTitle,
-        price: project.productPrice ?? 19.99,
-        imageUrl: project.productImageUrl,
-        externalUrl: project.productBuyUrl,
-      } as Product);
-      seen.add('short-featured-prod');
-    }
-
-    if (project?.productGroups) {
-      for (const group of project.productGroups) {
-        if (group.products) {
-          for (const prod of group.products) {
-            if (prod && prod.id && !seen.has(prod.id)) {
-              seen.add(prod.id);
-              list.push(prod);
-            }
-          }
-        }
-      }
-    }
-
-    // If still empty (e.g. fresh standalone short), fallback to default workspace products
-    if (list.length === 0) {
-      const demoGroup = OPPORTUNITY_OS_ABOUT_PROJECT.productGroups?.[0];
-      if (demoGroup && demoGroup.products) {
-        for (const prod of demoGroup.products) {
-          if (prod && prod.id && !seen.has(prod.id)) {
-            seen.add(prod.id);
-            list.push(prod);
-          }
-        }
-      }
-    }
-
-    return list;
-  }, [project]);
+  }, [project, activeGroup, catalogLookup, allAvailableProducts]);
 
   // Tier 1: Auto-rotating hero carousel products
   const shortCarouselProducts = useMemo<Product[]>(() => {
     if (project?.carouselProductIds && project.carouselProductIds.length > 0) {
       const mapped = project.carouselProductIds
-        .map((id) => allAvailableProducts.find((p) => p.id === id))
+        .map((id) => allAvailableProducts.find((p) => p.id === id) || catalogLookup.get(id))
         .filter((p): p is Product => Boolean(p));
       if (mapped.length > 0) return mapped;
     }
+    // If no explicit carousel sequence is defined, provide full catalog sequence
+    if (allAvailableProducts.length > 1) {
+      return allAvailableProducts.slice(0, 5);
+    }
     if (featuredShortProduct) return [featuredShortProduct];
     return allAvailableProducts.slice(0, 3);
-  }, [project?.carouselProductIds, allAvailableProducts, featuredShortProduct]);
+  }, [project?.carouselProductIds, allAvailableProducts, catalogLookup, featuredShortProduct]);
 
   // Tier 2: Full interactive collection tray
   const shortIncludedProducts = useMemo<Product[]>(() => {
     if (project?.includedProductIds && project.includedProductIds.length > 0) {
       const mapped = project.includedProductIds
-        .map((id) => allAvailableProducts.find((p) => p.id === id))
+        .map((id) => allAvailableProducts.find((p) => p.id === id) || catalogLookup.get(id))
         .filter((p): p is Product => Boolean(p));
       if (mapped.length > 0) return mapped;
     }
     return allAvailableProducts.length > 0 ? allAvailableProducts : (featuredShortProduct ? [featuredShortProduct] : []);
-  }, [project?.includedProductIds, allAvailableProducts, featuredShortProduct]);
+  }, [project?.includedProductIds, allAvailableProducts, catalogLookup, featuredShortProduct]);
 
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
