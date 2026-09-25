@@ -42,6 +42,9 @@ function normalizeProject(project: any): Project {
     qrPlacement: project.qrPlacement || meta.qrPlacement || 'TOP_RIGHT',
     qrCustomUrl: project.qrCustomUrl || meta.qrCustomUrl,
     showShoppableDrawer: project.showShoppableDrawer ?? meta.showShoppableDrawer ?? true,
+    includedProductIds: project.includedProductIds || meta.includedProductIds || [],
+    carouselProductIds: project.carouselProductIds || meta.carouselProductIds || [],
+    carouselRotationSpeed: project.carouselRotationSpeed ?? meta.carouselRotationSpeed ?? 8,
     productGroups: (project.productGroups || []).map((g: any) => {
       const placementProducts = (g.placements || []).map((pl: any) => normalizeProduct(pl.product)).filter(Boolean);
       const directProducts = (g.products || []).map(normalizeProduct);

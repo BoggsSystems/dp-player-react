@@ -144,8 +144,6 @@ function Player() {
   // Signature DigitPop full-surface tap handler: opens full-screen product view directly
   const handleSurfaceTap = () => {
     const groups = project?.productGroups || [];
-    if (groups.length === 0) return;
-
     let target = groups.find((g, i) => {
       const start = g.timestampSeconds;
       const next = groups[i + 1];
@@ -156,7 +154,9 @@ function Player() {
     if (!target) {
       target = activeGroup || groups[0];
     }
-    setActiveGroup(target);
+    if (target) {
+      setActiveGroup(target);
+    }
 
     // Open full multi-product collection view for the current moment
     setInspectProduct(null);
@@ -245,6 +245,61 @@ function Player() {
     }
     return null;
   }, [project, activeGroup]);
+
+  // Unified list of all products belonging to this project / workspace
+  const allAvailableProducts = useMemo<Product[]>(() => {
+    const list: Product[] = [];
+    const seen = new Set<string>();
+
+    if (project?.productTitle) {
+      list.push({
+        id: 'short-featured-prod',
+        title: project.productTitle,
+        price: project.productPrice ?? 19.99,
+        imageUrl: project.productImageUrl,
+        externalUrl: project.productBuyUrl,
+      } as Product);
+      seen.add('short-featured-prod');
+    }
+
+    if (project?.productGroups) {
+      for (const group of project.productGroups) {
+        if (group.products) {
+          for (const prod of group.products) {
+            if (prod && prod.id && !seen.has(prod.id)) {
+              seen.add(prod.id);
+              list.push(prod);
+            }
+          }
+        }
+      }
+    }
+
+    return list;
+  }, [project]);
+
+  // Tier 1: Auto-rotating hero carousel products
+  const shortCarouselProducts = useMemo<Product[]>(() => {
+    if (project?.carouselProductIds && project.carouselProductIds.length > 0) {
+      const mapped = project.carouselProductIds
+        .map((id) => allAvailableProducts.find((p) => p.id === id))
+        .filter((p): p is Product => Boolean(p));
+      if (mapped.length > 0) return mapped;
+    }
+    if (featuredShortProduct) return [featuredShortProduct];
+    return allAvailableProducts.slice(0, 3);
+  }, [project?.carouselProductIds, allAvailableProducts, featuredShortProduct]);
+
+  // Tier 2: Full interactive collection tray
+  const shortIncludedProducts = useMemo<Product[]>(() => {
+    if (project?.includedProductIds && project.includedProductIds.length > 0) {
+      const mapped = project.includedProductIds
+        .map((id) => allAvailableProducts.find((p) => p.id === id))
+        .filter((p): p is Product => Boolean(p));
+      if (mapped.length > 0) return mapped;
+    }
+    return allAvailableProducts.length > 0 ? allAvailableProducts : (featuredShortProduct ? [featuredShortProduct] : []);
+  }, [project?.includedProductIds, allAvailableProducts, featuredShortProduct]);
 
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
@@ -359,10 +414,13 @@ function Player() {
             productPrice={featuredShortProduct?.price}
           />
 
-          {/* Pinned Lower-Third 1-Click Buy Drawer */}
-          {featuredShortProduct && (
+          {/* Two-Tier Rotating Hero Carousel Drawer */}
+          {(featuredShortProduct || shortCarouselProducts.length > 0 || shortIncludedProducts.length > 0) && (
             <ShortsShoppableDrawer
               product={featuredShortProduct}
+              carouselProducts={shortCarouselProducts}
+              includedProducts={shortIncludedProducts}
+              rotationSpeed={project?.carouselRotationSpeed ?? 8}
               onBuy={(p) => {
                 if (p.externalUrl) {
                   window.open(p.externalUrl, '_blank', 'noopener,noreferrer');

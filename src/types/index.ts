@@ -82,6 +82,9 @@ export interface Project {
   productPrice?: number;
   productImageUrl?: string;
   productBuyUrl?: string;
+  includedProductIds?: string[];
+  carouselProductIds?: string[];
+  carouselRotationSpeed?: number;
 }
 
 export interface QuizQuestion {
