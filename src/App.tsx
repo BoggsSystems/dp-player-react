@@ -117,6 +117,7 @@ function Player() {
   useWebSocketStream({
     streamKey,
     sessionId: projectId,
+    enabled: isLive,
     onLiveOverlay: handleLiveOverlay,
   });
 

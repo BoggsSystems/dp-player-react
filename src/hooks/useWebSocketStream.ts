@@ -4,12 +4,14 @@ import { ProductGroup, ViewingMode } from '../types';
 interface UseWebSocketStreamProps {
   streamKey?: string;
   sessionId?: string;
+  enabled?: boolean;
   onLiveOverlay?: (productGroup: ProductGroup, viewingMode: ViewingMode) => void;
 }
 
 export function useWebSocketStream({
   streamKey,
   sessionId,
+  enabled = true,
   onLiveOverlay,
 }: UseWebSocketStreamProps) {
   const [isConnected, setIsConnected] = useState(false);
@@ -21,7 +23,15 @@ export function useWebSocketStream({
   const reconnectTimerRef = useRef<any>(null);
 
   useEffect(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname || 'localhost'}:9000`;
+    if (!enabled) return;
+
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const host = typeof window !== 'undefined' ? (window.location.hostname || 'localhost') : 'localhost';
+    const wsUrl = import.meta.env.VITE_WS_URL || (
+      isSecure
+        ? `wss://${host}/ws`
+        : `ws://${host}:9000`
+    );
 
     function connect() {
       try {
