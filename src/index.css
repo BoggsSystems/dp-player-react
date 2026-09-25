@@ -3015,7 +3015,26 @@ html, body, #root, main, .player-container {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* On Desktop/Tablet (>768px), when shopping mode or catalog is active, expand side-by-side */
+/* Mobile full-bleed single-column fail-safe (<768px) */
+@media (max-width: 767px) {
+  .shorts-desktop-shop-rail {
+    display: none !important;
+  }
+  .player-shorts-layout.desktop-expanded {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .player-shorts-layout.desktop-expanded .shorts-video-stage {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-right: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* On Desktop/Tablet (>=768px), when shopping mode or catalog is active, expand side-by-side */
 @media (min-width: 768px) {
   .player-shorts-layout.desktop-expanded {
     display: flex;

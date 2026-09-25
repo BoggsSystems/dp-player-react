@@ -391,10 +391,26 @@ function Player() {
   // State for Desktop & Tablet Adaptive Side-by-Side Shopping Mode
   const [isDesktopShortShopOpen, setIsDesktopShortShopOpen] = useState(() => {
     if (typeof window === 'undefined') return false;
+    const isDesktop = window.innerWidth >= 768;
     const expandParam = queryParams.get('expand') || queryParams.get('shop') || queryParams.get('autoExpand');
-    if (expandParam === 'true' || expandParam === '1') return true;
-    return window.innerWidth >= 768;
+    if (expandParam === 'false' || expandParam === '0') return false;
+    return isDesktop;
   });
+
+  // Dynamically adapt shopping rail on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const isDesktop = window.innerWidth >= 768;
+      const expandParam = queryParams.get('expand') || queryParams.get('shop') || queryParams.get('autoExpand');
+      if (expandParam === 'false' || expandParam === '0') {
+        setIsDesktopShortShopOpen(false);
+      } else {
+        setIsDesktopShortShopOpen(isDesktop);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [queryParams]);
 
   // Notify parent window / embed.js on expand state change
   useEffect(() => {
