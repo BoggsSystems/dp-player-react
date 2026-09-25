@@ -11,7 +11,7 @@ import LiveShoppableRail from './components/LiveShoppableRail';
 import { ShareModal } from './components/ShareModal';
 import { useWebSocketStream } from './hooks/useWebSocketStream';
 import { Project, ProductGroup, ViewingMode, Product } from './types';
-import { api } from './services/api';
+import { api, OPPORTUNITY_OS_ABOUT_PROJECT } from './services/api';
 import { CartProvider, useCart } from './context/CartContext';
 
 function Player() {
@@ -270,6 +270,19 @@ function Player() {
               seen.add(prod.id);
               list.push(prod);
             }
+          }
+        }
+      }
+    }
+
+    // If still empty (e.g. fresh standalone short), fallback to default workspace products
+    if (list.length === 0) {
+      const demoGroup = OPPORTUNITY_OS_ABOUT_PROJECT.productGroups?.[0];
+      if (demoGroup && demoGroup.products) {
+        for (const prod of demoGroup.products) {
+          if (prod && prod.id && !seen.has(prod.id)) {
+            seen.add(prod.id);
+            list.push(prod);
           }
         }
       }
