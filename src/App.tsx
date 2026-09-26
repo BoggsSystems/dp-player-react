@@ -368,6 +368,61 @@ function Player() {
     return allAvailableProducts.length > 0 ? allAvailableProducts : (featuredShortProduct ? [featuredShortProduct] : []);
   }, [project?.includedProductIds, allAvailableProducts, catalogLookup, featuredShortProduct]);
 
+  // Canonical Option A Single Default ProductGroup for Shorts
+  const canonicalShortProductGroup = useMemo<ProductGroup>(() => {
+    const existingGroup = activeGroup || project?.productGroups?.[0];
+    const products = (existingGroup?.products && existingGroup.products.length > 0)
+      ? existingGroup.products
+      : (shortIncludedProducts.length > 0 ? shortIncludedProducts : allAvailableProducts);
+
+    return {
+      id: existingGroup?.id || `short-default-group-${project?.id || 'main'}`,
+      title: existingGroup?.title || project?.productTitle || 'Shoppable Video Collection',
+      subtitle: existingGroup?.subtitle || 'Interactive Shoppable Collection',
+      description: existingGroup?.description || '1-Click Shoppable Products for this Short',
+      timestampSeconds: 0,
+      viewingMode: 'TAP_TO_REVEAL',
+      products,
+      bundleDiscountPercent: existingGroup?.bundleDiscountPercent || 15,
+    };
+  }, [activeGroup, project, shortIncludedProducts, allAvailableProducts]);
+
+  // Effective Active ProductGroup: for Shorts, always guarantee the single canonical product group with products
+  const effectiveActiveGroup = useMemo<ProductGroup | null>(() => {
+    if (isShort) {
+      return canonicalShortProductGroup;
+    }
+    if (activeGroup && activeGroup.products && activeGroup.products.length > 0) {
+      return activeGroup;
+    }
+    if (project?.productGroups && project.productGroups.length > 0 && project.productGroups[0].products?.length > 0) {
+      return project.productGroups[0];
+    }
+    if (allAvailableProducts.length > 0) {
+      return {
+        id: activeGroup?.id || `default-group-${project?.id || 'main'}`,
+        title: activeGroup?.title || project?.productTitle || 'Featured Collection',
+        subtitle: activeGroup?.subtitle || 'Interactive Shoppable Collection',
+        description: activeGroup?.description || 'Featured Products',
+        timestampSeconds: 0,
+        viewingMode: 'TAP_TO_REVEAL',
+        products: allAvailableProducts,
+        bundleDiscountPercent: 15,
+      };
+    }
+    return activeGroup;
+  }, [isShort, canonicalShortProductGroup, activeGroup, project, allAvailableProducts]);
+
+  const effectiveAllGroups = useMemo<ProductGroup[]>(() => {
+    if (isShort) {
+      return [canonicalShortProductGroup];
+    }
+    if (project?.productGroups && project.productGroups.length > 0) {
+      return project.productGroups;
+    }
+    return effectiveActiveGroup ? [effectiveActiveGroup] : [];
+  }, [isShort, canonicalShortProductGroup, project?.productGroups, effectiveActiveGroup]);
+
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
   };
@@ -711,8 +766,8 @@ function Player() {
 
           {/* Right Split: Live Shoppable Rail */}
           <LiveShoppableRail
-            productGroup={activeGroup}
-            allGroups={project?.productGroups || []}
+            productGroup={effectiveActiveGroup}
+            allGroups={effectiveAllGroups}
             onInspectProduct={handleInspectProduct}
             onOpenAllGroups={() => setIsAllGroupsOpen(true)}
             onCollapseRail={() => handleModeChange('IMMERSIVE')}
@@ -799,7 +854,7 @@ function Player() {
       <ShoppableDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        productGroup={activeGroup}
+        productGroup={effectiveActiveGroup}
         onSeekAndPlay={handleSeekAndPlay}
         onOpenAllGroups={() => setIsAllGroupsOpen(true)}
       />
@@ -814,8 +869,8 @@ function Player() {
         }}
         project={project}
         currentTime={currentTime}
-        productGroup={activeGroup}
-        allGroups={project?.productGroups || []}
+        productGroup={effectiveActiveGroup}
+        allGroups={effectiveAllGroups}
         initialProduct={inspectProduct}
         onSelectGroup={(g) => setActiveGroup(g)}
         onSeekAndPlay={handleSeekAndPlay}
@@ -828,8 +883,8 @@ function Player() {
       <AllGroupsModal
         isOpen={isAllGroupsOpen}
         onClose={() => setIsAllGroupsOpen(false)}
-        allGroups={project?.productGroups || []}
-        activeGroupId={activeGroup?.id}
+        allGroups={effectiveAllGroups}
+        activeGroupId={effectiveActiveGroup?.id}
         onSeekAndPlay={handleSeekAndPlay}
         onSelectGroup={(g) => setActiveGroup(g)}
       />
@@ -840,7 +895,7 @@ function Player() {
         onClose={() => setIsShareOpen(false)}
         project={project}
         currentTime={currentTime}
-        activeProduct={inspectProduct || activeGroup?.products?.[0]}
+        activeProduct={inspectProduct || effectiveActiveGroup?.products?.[0]}
       />
     </main>
   );
