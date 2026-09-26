@@ -218,6 +218,37 @@ function Player() {
     setTimeout(() => setSeekTime(null), 100);
   };
 
+  // Inbound Host Message Bus for Cross-Player Lifecycle Coordination
+  useEffect(() => {
+    const handleHostMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      switch (data.type) {
+        case 'DIGITPOP_COMMAND_PAUSE':
+          setIsPaused(true);
+          break;
+        case 'DIGITPOP_COMMAND_PLAY':
+          setIsPaused(false);
+          break;
+        case 'DIGITPOP_COMMAND_MUTE':
+          setIsMuted(true);
+          break;
+        case 'DIGITPOP_COMMAND_UNMUTE':
+          setIsMuted(false);
+          break;
+        case 'DIGITPOP_COMMAND_SEEK':
+          if (typeof data.timestamp === 'number') {
+            handleSeekAndPlay(data.timestamp);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('message', handleHostMessage);
+    return () => window.removeEventListener('message', handleHostMessage);
+  }, []);
+
   const isShort = useMemo(() => {
     return Boolean(
       queryParams.get('mode') === 'short' ||
