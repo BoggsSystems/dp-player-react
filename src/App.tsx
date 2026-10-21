@@ -332,21 +332,6 @@ function Player() {
       }
     }
 
-    // 3. Fallback: If fewer than 3 products, enrich with workspace catalog items so rotation is always active
-    if (list.length < 3) {
-      const demoGroups = [
-        ...(OPPORTUNITY_OS_JOB_APPLICATION_PROJECT.productGroups || []),
-        ...(OPPORTUNITY_OS_ABOUT_PROJECT.productGroups || []),
-      ];
-      for (const grp of demoGroups) {
-        if (grp.products) {
-          for (const prod of grp.products) {
-            addProduct(prod);
-          }
-        }
-      }
-    }
-
     return list;
   }, [project, catalogLookup]);
 
@@ -644,7 +629,7 @@ function Player() {
                     <span>Interactive Shoppable Collection</span>
                   </h2>
                   <p className="shorts-desktop-shop-subtitle">
-                    Featured products tagged directly in this video clip ({allAvailableProducts.length} items)
+                    Featured products tagged directly in this video clip ({shortIncludedProducts.length} item{shortIncludedProducts.length === 1 ? '' : 's'})
                   </p>
                 </div>
                 <button
@@ -669,7 +654,7 @@ function Player() {
               </div>
 
               <div className="shorts-desktop-products-grid">
-                {allAvailableProducts.map((prod) => (
+                {shortIncludedProducts.map((prod) => (
                   <article
                     key={prod.id}
                     className="shorts-desktop-product-card"
