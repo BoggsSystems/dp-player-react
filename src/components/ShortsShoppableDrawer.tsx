@@ -11,6 +11,9 @@ interface ShortsShoppableDrawerProps {
   onInspect?: (product: Product) => void;
   isDesktopExpanded?: boolean;
   onToggleDesktopExpand?: () => void;
+  projectId?: string;
+  channel?: string;
+  apiBaseUrl?: string;
 }
 
 export default function ShortsShoppableDrawer({
@@ -22,6 +25,9 @@ export default function ShortsShoppableDrawer({
   onInspect,
   isDesktopExpanded = false,
   onToggleDesktopExpand,
+  projectId,
+  channel = 'WEB_PLAYER',
+  apiBaseUrl,
 }: ShortsShoppableDrawerProps) {
   // Normalize effective carousel products list
   const activeProducts = useMemo<Product[]>(() => {
@@ -41,6 +47,33 @@ export default function ShortsShoppableDrawer({
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState<boolean>(false);
 
+  const emitTelemetry = (eventType: string, extra: Record<string, any> = {}) => {
+    try {
+      const base = apiBaseUrl || (typeof window !== 'undefined' && (window as any).__DIGITPOP_API_URL__) || '';
+      const endpoint = `${base}/api/analytics/track`;
+      const payload = JSON.stringify({
+        projectId: projectId || 'default',
+        eventType,
+        channel: channel || 'WEB_PLAYER',
+        productId: currentProduct?.id,
+        productTitle: currentProduct?.title,
+        destinationUrl: currentProduct?.externalUrl,
+        ...extra,
+      });
+
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
+      } else if (typeof fetch !== 'undefined') {
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  };
+
   // Auto-rotating timer
   useEffect(() => {
     if (rotationSpeed <= 0 || activeProducts.length <= 1) return;
@@ -57,20 +90,37 @@ export default function ShortsShoppableDrawer({
   const currentProduct = activeProducts[activeIndex % activeProducts.length] || activeProducts[0] || product;
   if (!currentProduct) return null;
 
+  // Track drawer impression when active product changes
+  useEffect(() => {
+    if (currentProduct?.id) {
+      emitTelemetry('DRAWER_IMPRESSION', {
+        productId: currentProduct.id,
+        productTitle: currentProduct.title,
+        destinationUrl: currentProduct.externalUrl,
+      });
+    }
+  }, [currentProduct?.id]);
+
   const handleDrawerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    emitTelemetry('CATALOG_OPEN');
     // On desktop/tablet, toggle the expanded side-by-side shopping pane
     if (window.innerWidth >= 768 && onToggleDesktopExpand) {
       onToggleDesktopExpand();
     } else if (allCatalogProducts.length > 1) {
       setIsCatalogOpen(true);
     } else {
-      onBuy?.(currentProduct);
+      handleBuyClick(e, currentProduct);
     }
   };
 
   const handleBuyClick = (e: React.MouseEvent, prod: Product) => {
     e.stopPropagation();
+    emitTelemetry('PRODUCT_CLICKTHROUGH', {
+      productId: prod.id,
+      productTitle: prod.title,
+      destinationUrl: prod.externalUrl,
+    });
     if (prod.externalUrl) {
       window.open(prod.externalUrl, '_blank', 'noopener,noreferrer');
     }
