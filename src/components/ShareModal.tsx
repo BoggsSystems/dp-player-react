@@ -39,12 +39,36 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   };
 
   const shareUrl = useMemo(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://digitpop.opportunity-system.com';
+    const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    const hostUrlParam = queryParams.get('hostUrl') || queryParams.get('aboutUrl');
+    const isShort = project?.isShort || (project as any)?.mediaType === 'SHORT';
+
+    // Canonical hub base for Opportunity OS / About page
+    const defaultHubUrl = 'https://opportunity-system.com/about';
+    const hubBase = hostUrlParam || defaultHubUrl;
+
+    if (hubBase) {
+      try {
+        const u = new URL(hubBase);
+        if (project?.id) {
+          if (isShort) {
+            u.searchParams.set('short', project.id);
+          } else {
+            u.searchParams.set('v', project.id);
+          }
+        }
+        if (includeTimestamp && roundedSeconds > 0) {
+          u.searchParams.set('t', `${roundedSeconds}s`);
+        }
+        return u.toString();
+      } catch (e) {
+        // Fall through to fallback
+      }
+    }
+
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://player.digitpop.opportunity-system.com';
     const slug = (project as any)?.slug;
-
-    // Use compact /v/:slug if available, otherwise standard /player/?projectId=...
     const basePath = slug ? `${origin}/v/${slug}` : `${origin}/player/`;
-
     const params = new URLSearchParams();
     if (!slug && project?.id) {
       params.set('projectId', project.id);
@@ -57,9 +81,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   }, [project, includeTimestamp, roundedSeconds]);
 
   const embedCode = useMemo(() => {
-    const embedUrl = shareUrl;
-    return `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="aspect-ratio: 16/9; border-radius: 12px; border: none;"></iframe>`;
-  }, [shareUrl]);
+    const isShort = project?.isShort || (project as any)?.mediaType === 'SHORT';
+    const embedOrigin = 'https://player.digitpop.opportunity-system.com';
+    const embedUrl = `${embedOrigin}/?projectId=${encodeURIComponent(project?.id || '')}&mode=${isShort ? 'short' : 'vod'}`;
+    const aspectRatio = isShort ? '9/16' : '16/9';
+    return `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="aspect-ratio: ${aspectRatio}; border-radius: 12px; border: none;"></iframe>`;
+  }, [project]);
 
   if (!isOpen) return null;
 
