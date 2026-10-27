@@ -1,4 +1,5 @@
 import http from "http";
+import https from "https";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -42,25 +43,87 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ status: "ok", service: "digitpop-player" }));
     return;
   }
+
+  // Reverse proxy /api/* requests to DigitPopServer
+  if (reqPath.startsWith("/api/")) {
+    const apiTarget = `https://digitpop.opportunity-system.com${req.url}`;
+    const proxyReq = https.request(
+      apiTarget,
+      {
+        method: req.method,
+        headers: {
+          ...req.headers,
+          host: "digitpop.opportunity-system.com",
+        },
+      },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res);
+      }
+    );
+    proxyReq.on("error", (err) => {
+      console.error("[ProxyError]", err.message);
+      res.writeHead(502, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Failed to connect to DigitPopServer API" }));
+    });
+    req.pipe(proxyReq);
+    return;
+  }
+
   let filePath = path.join(distDir, reqPath);
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
       filePath = path.join(distDir, "index.html");
+      fs.readFile(filePath, (readErr, data) => {
+        if (readErr) {
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end("Server Error");
+          return;
+        }
+        res.writeHead(200, { "Content-Type": "text/html; charset=UTF-8" });
+        res.end(data);
+      });
+      return;
     }
 
-    fs.readFile(filePath, (readErr, data) => {
-      if (readErr) {
-        res.writeHead(500, { "Content-Type": "text/plain" });
-        res.end("Server Error");
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = mimeTypes[ext] || "application/octet-stream";
+    const fileSize = stats.size;
+    const range = req.headers.range;
+
+    // Support HTTP 206 Partial Content (essential for browser MP4 video streaming)
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      if (start >= fileSize || end >= fileSize) {
+        res.writeHead(416, {
+          "Content-Range": `bytes */${fileSize}`,
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end();
         return;
       }
 
-      const ext = path.extname(filePath).toLowerCase();
-      const contentType = mimeTypes[ext] || "application/octet-stream";
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(data);
-    });
+      const chunkSize = end - start + 1;
+      const fileStream = fs.createReadStream(filePath, { start, end });
+      res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunkSize,
+        "Content-Type": contentType,
+      });
+      fileStream.pipe(res);
+    } else {
+      res.writeHead(200, {
+        "Content-Length": fileSize,
+        "Content-Type": contentType,
+        "Accept-Ranges": "bytes",
+      });
+      fs.createReadStream(filePath).pipe(res);
+    }
   });
 });
 
