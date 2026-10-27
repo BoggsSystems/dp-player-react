@@ -255,7 +255,10 @@ function Player() {
       queryParams.get('format') === 'short' ||
       queryParams.get('aspect') === '9:16' ||
       project?.isShort ||
-      project?.aspectRatio === '9:16'
+      project?.aspectRatio === '9:16' ||
+      (project as any)?.mediaType === 'SHORT' ||
+      (project?.masterVodUrl ? project.masterVodUrl.includes('/shorts/') || project.masterVodUrl.includes('_SHORT') : false) ||
+      (project as any)?.channel === 'shorts'
     );
   }, [queryParams, project]);
 
@@ -599,8 +602,8 @@ function Player() {
               productPrice={featuredShortProduct?.price}
             />
 
-            {/* Mobile & Drawer Carousel (shown when desktop side-panel is closed) */}
-            {!isDesktopShortShopOpen && (featuredShortProduct || shortCarouselProducts.length > 0 || shortIncludedProducts.length > 0) && (
+            {/* Mobile & Drawer Carousel (shown when desktop side-panel is closed or when viewport is mobile/modal width) */}
+            {((typeof window !== 'undefined' && window.innerWidth < 768) || !isDesktopShortShopOpen) && (featuredShortProduct || shortCarouselProducts.length > 0 || shortIncludedProducts.length > 0) && (
               <ShortsShoppableDrawer
                 product={featuredShortProduct}
                 carouselProducts={shortCarouselProducts}
@@ -619,8 +622,8 @@ function Player() {
             )}
           </div>
 
-          {/* Desktop & Tablet Adaptive Shopping Co-Pilot Rail */}
-          {isDesktopShortShopOpen && (
+          {/* Desktop & Tablet Adaptive Shopping Co-Pilot Rail (rendered on desktop-width viewports) */}
+          {isDesktopShortShopOpen && (typeof window === 'undefined' || window.innerWidth >= 768) && (
             <aside className="shorts-desktop-shop-rail">
               <div className="shorts-desktop-shop-header">
                 <div>

@@ -37,6 +37,11 @@ const server = http.createServer((req, res) => {
   }
 
   let reqPath = req.url ? req.url.split("?")[0] : "/";
+  if (reqPath === "/health" || reqPath === "/healthz") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok", service: "digitpop-player" }));
+    return;
+  }
   let filePath = path.join(distDir, reqPath);
 
   fs.stat(filePath, (err, stats) => {
