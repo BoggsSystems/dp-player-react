@@ -2,6 +2,19 @@ import { Project, QuizQuestion, PlayerTelemetryEvent, Product } from '../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
+const R2_PUBLIC_DOMAIN = 'https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev';
+
+function resolveCdnImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const clean = url.replace(/^\/+/, '');
+  if (clean.startsWith('images/') || clean.startsWith('thumbnails/')) {
+    const filename = clean.split('/').pop();
+    return `${R2_PUBLIC_DOMAIN}/products/${filename}`;
+  }
+  return `${R2_PUBLIC_DOMAIN}/${clean}`;
+}
+
 function normalizeProduct(p: any): Product {
   if (!p) return p;
   const price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
@@ -15,15 +28,20 @@ function normalizeProduct(p: any): Product {
     ? (typeof p.ratingsCount === 'number' ? p.ratingsCount : parseInt(p.ratingsCount, 10) || undefined)
     : undefined;
 
+  const imageUrl = resolveCdnImageUrl(p.imageUrl);
+  const rawUrls = Array.isArray(p.imageUrls) && p.imageUrls.length > 0 ? p.imageUrls : (imageUrl ? [imageUrl] : []);
+  const imageUrls = rawUrls.map(resolveCdnImageUrl).filter(Boolean);
+
   return {
     ...p,
     price,
     compareAtPrice,
     rating,
     ratingsCount,
+    imageUrl,
+    imageUrls,
     bullets: Array.isArray(p.bullets) ? p.bullets : [],
     specs: Array.isArray(p.specs) ? p.specs : [],
-    imageUrls: Array.isArray(p.imageUrls) && p.imageUrls.length > 0 ? p.imageUrls : (p.imageUrl ? [p.imageUrl] : []),
   };
 }
 

@@ -669,6 +669,14 @@ function Player() {
                           src={prod.imageUrl}
                           alt={prod.title}
                           className="shorts-desktop-card-thumb"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            const filename = (prod.imageUrl || '').split('/').pop();
+                            const cdnFallback = `https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev/products/${filename}`;
+                            if (img.src !== cdnFallback) {
+                              img.src = cdnFallback;
+                            }
+                          }}
                         />
                       )}
                       <div className="shorts-desktop-card-info">
