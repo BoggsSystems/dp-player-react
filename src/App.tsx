@@ -280,7 +280,16 @@ function Player() {
         }
       }
     }
-    // Also index project-level products if available
+    // Index direct project-level products
+    if (project?.products) {
+      for (const prod of project.products) {
+        if (prod && prod.id) {
+          map.set(prod.id, prod);
+          map.set(prod.title.toLowerCase(), prod);
+        }
+      }
+    }
+    // Also index project-level product groups if available
     if (project?.productGroups) {
       for (const group of project.productGroups) {
         if (group.products) {
@@ -307,7 +316,14 @@ function Player() {
       list.push(prod);
     };
 
-    // 1. Products from canonical product groups attached to the project
+    // 1. Direct products tagged to the project
+    if (project?.products && project.products.length > 0) {
+      for (const prod of project.products) {
+        addProduct(prod);
+      }
+    }
+
+    // 2. Products from product groups attached to the project
     if (project?.productGroups) {
       for (const group of project.productGroups) {
         if (group.products) {
@@ -318,7 +334,7 @@ function Player() {
       }
     }
 
-    // 2. If project has a specific productTitle or productId, resolve it from catalog or add it
+    // 3. If project has a specific productTitle or productId, resolve it from catalog or add it
     if (project?.productTitle || (project as any)?.productId) {
       const matchKey = (project as any)?.productId || project?.productTitle?.toLowerCase();
       const matched = matchKey ? catalogLookup.get(matchKey) : null;
@@ -339,6 +355,12 @@ function Player() {
   }, [project, catalogLookup]);
 
   const featuredShortProduct = useMemo(() => {
+    // 1. Check for product marked as HERO role
+    if (project?.products) {
+      const hero = project.products.find((p) => p.role === 'HERO');
+      if (hero) return hero;
+    }
+    // 2. Check for explicit productTitle match
     if (project?.productTitle) {
       const match = catalogLookup.get(project.productTitle.toLowerCase()) || 
                     ((project as any)?.productId ? catalogLookup.get((project as any).productId) : null);
@@ -362,19 +384,25 @@ function Player() {
 
   // Tier 1: Auto-rotating hero carousel products
   const shortCarouselProducts = useMemo<Product[]>(() => {
+    // 1. If explicit carousel product IDs defined
     if (project?.carouselProductIds && project.carouselProductIds.length > 0) {
       const mapped = project.carouselProductIds
         .map((id) => allAvailableProducts.find((p) => p.id === id) || catalogLookup.get(id))
         .filter((p): p is Product => Boolean(p));
       if (mapped.length > 0) return mapped;
     }
-    // If no explicit carousel sequence is defined, provide full catalog sequence
+    // 2. If project has products tagged as CAROUSEL or HERO
+    if (project?.products && project.products.length > 0) {
+      const carouselItems = project.products.filter((p) => p.role === 'CAROUSEL' || p.role === 'HERO');
+      if (carouselItems.length > 0) return carouselItems;
+    }
+    // 3. Fallback to all available products
     if (allAvailableProducts.length > 1) {
       return allAvailableProducts.slice(0, 5);
     }
     if (featuredShortProduct) return [featuredShortProduct];
     return allAvailableProducts.slice(0, 3);
-  }, [project?.carouselProductIds, allAvailableProducts, catalogLookup, featuredShortProduct]);
+  }, [project?.carouselProductIds, project?.products, allAvailableProducts, catalogLookup, featuredShortProduct]);
 
   // Tier 2: Full interactive collection tray
   const shortIncludedProducts = useMemo<Product[]>(() => {
@@ -384,8 +412,11 @@ function Player() {
         .filter((p): p is Product => Boolean(p));
       if (mapped.length > 0) return mapped;
     }
+    if (project?.products && project.products.length > 0) {
+      return project.products;
+    }
     return allAvailableProducts.length > 0 ? allAvailableProducts : (featuredShortProduct ? [featuredShortProduct] : []);
-  }, [project?.includedProductIds, allAvailableProducts, catalogLookup, featuredShortProduct]);
+  }, [project?.includedProductIds, project?.products, allAvailableProducts, catalogLookup, featuredShortProduct]);
 
   // Canonical Option A Single Default ProductGroup for Shorts
   const canonicalShortProductGroup = useMemo<ProductGroup>(() => {

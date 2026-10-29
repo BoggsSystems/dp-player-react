@@ -30,6 +30,8 @@ export interface Product {
   rating?: number;
   ratingsCount?: number;
   isPrime?: boolean;
+  role?: 'HERO' | 'CAROUSEL' | 'CATALOG';
+  displayOrder?: number;
 }
 
 export interface ProductGroup {
@@ -44,8 +46,8 @@ export interface ProductGroup {
   products: Product[];
   stripePriceId?: string;
   bundleDiscountPercent?: number;
-  hotspotX?: number; // percentage 0-100
-  hotspotY?: number; // percentage 0-100
+  hotspotX?: number; // percentage 0-100 (deprecated)
+  hotspotY?: number; // percentage 0-100 (deprecated)
 }
 
 export interface SubtitleWord {
@@ -56,6 +58,14 @@ export interface SubtitleWord {
   confidence?: number;
 }
 
+export interface ProjectProduct {
+  id: string;
+  productId: string;
+  role: 'HERO' | 'CAROUSEL' | 'CATALOG';
+  displayOrder: number;
+  product: Product;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -64,6 +74,8 @@ export interface Project {
   hlsManifestUrl?: string;
   thumbnailUrl?: string;
   durationSeconds?: number;
+  products?: Product[];
+  projectProducts?: ProjectProduct[];
   productGroups?: ProductGroup[];
   isActive?: boolean;
   isShort?: boolean;

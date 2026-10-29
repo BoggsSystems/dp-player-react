@@ -67,6 +67,21 @@ function normalizeProject(project: any): Project {
     includedProductIds: project.includedProductIds || meta.includedProductIds || [],
     carouselProductIds: project.carouselProductIds || meta.carouselProductIds || [],
     carouselRotationSpeed: project.carouselRotationSpeed ?? meta.carouselRotationSpeed ?? 8,
+    products: Array.isArray(project.products)
+      ? project.products.map(normalizeProduct)
+      : (Array.isArray(project.projectProducts)
+        ? project.projectProducts.map((pp: any) => ({
+            ...normalizeProduct(pp.product),
+            role: pp.role,
+            displayOrder: pp.displayOrder,
+          }))
+        : []),
+    projectProducts: Array.isArray(project.projectProducts)
+      ? project.projectProducts.map((pp: any) => ({
+          ...pp,
+          product: normalizeProduct(pp.product),
+        }))
+      : [],
     productGroups: (project.productGroups || []).map((g: any) => {
       const placementProducts = (g.placements || []).map((pl: any) => normalizeProduct(pl.product)).filter(Boolean);
       const directProducts = (g.products || []).map(normalizeProduct);
