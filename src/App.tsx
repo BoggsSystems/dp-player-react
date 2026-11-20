@@ -487,8 +487,8 @@ function Player() {
       return `http://${window.location.hostname || 'localhost'}:8080/live/${streamKey}.m3u8`;
     }
     return (
-      project?.masterVodUrl ||
       project?.hlsManifestUrl ||
+      project?.masterVodUrl ||
       'https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev/vods/demo_presentation.mp4'
     );
   }, [isLive, streamKey, project, queryParams]);

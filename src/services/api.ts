@@ -105,6 +105,34 @@ function normalizeProject(project: any): Project {
 
 export const api = {
   async getProject(id: string): Promise<Project> {
+    // 0. High-performance Edge CDN manifest check (sub-30ms static delivery)
+    if (R2_PUBLIC_DOMAIN && id && !id.startsWith('demo_') && !id.startsWith('proj_bavaria')) {
+      try {
+        const edgeRes = await fetch(`${R2_PUBLIC_DOMAIN}/projects/${id}/manifest.json`);
+        if (edgeRes.ok) {
+          const edgeData = await edgeRes.json();
+          if (edgeData && (edgeData.projectId || edgeData.id)) {
+            const mappedProject = {
+              id: edgeData.projectId || edgeData.id,
+              name: edgeData.title || 'DigitPop Video',
+              description: edgeData.description || '',
+              masterVodUrl: edgeData.video?.streamUrl || '',
+              hlsManifestUrl: edgeData.video?.hlsManifestUrl || null,
+              verticalVideoUrl: edgeData.video?.verticalVideoUrl || null,
+              durationSeconds: edgeData.video?.duration || 0,
+              thumbnailUrl: edgeData.video?.thumbnails?.[0] || null,
+              productGroups: edgeData.productGroups || [],
+              baskets: edgeData.baskets || [],
+              metadata: edgeData.settings || {},
+            };
+            return normalizeProject(mappedProject);
+          }
+        }
+      } catch (e) {
+        // Fallback to API if edge manifest is not yet published
+      }
+    }
+
     // 1. Fetch from backend API if available
     if (API_BASE_URL) {
       try {
