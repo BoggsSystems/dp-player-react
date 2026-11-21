@@ -13,6 +13,7 @@ import { useWebSocketStream } from './hooks/useWebSocketStream';
 import { Project, ProductGroup, ViewingMode, Product } from './types';
 import { api, OPPORTUNITY_OS_ABOUT_PROJECT, OPPORTUNITY_OS_JOB_APPLICATION_PROJECT } from './services/api';
 import { CartProvider, useCart } from './context/CartContext';
+import { ShopVideoLogo } from './components/ShopVideoLogo';
 
 function Player() {
   const { totalCount } = useCart();
@@ -582,8 +583,8 @@ function Player() {
                       boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
                     }}
                   >
-                    <span style={{ color: '#38bdf8', fontWeight: 800 }}>SV</span>
-                    <span>ShopVideo</span>
+                    <ShopVideoLogo size={16} />
+                    <span style={{ fontWeight: 700, letterSpacing: '-0.01em' }}>ShopVideo<span style={{ color: '#38bdf8' }}>.tv</span></span>
                   </a>
                 )}
               </div>
