@@ -534,7 +534,7 @@ function Player() {
                 pointerEvents: 'none',
               }}
             >
-              <div style={{ pointerEvents: 'auto' }}>
+              <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={toggleMute}
@@ -558,6 +558,34 @@ function Player() {
                   {isMuted ? <VolumeX size={14} color="#FFB800" /> : <Volume2 size={14} color="#10b981" />}
                   <span>{isMuted ? 'UNMUTE' : 'SOUND ON'}</span>
                 </button>
+
+                {(!project || (project as any)?.metadata?.watermark !== false) && (
+                  <a
+                    href="https://shopvideo.tv"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Powered by ShopVideo.tv"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.65)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '20px',
+                      color: '#e5e7eb',
+                      padding: '5px 10px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    <span style={{ color: '#38bdf8', fontWeight: 800 }}>SV</span>
+                    <span>ShopVideo</span>
+                  </a>
+                )}
               </div>
 
               <div style={{ pointerEvents: 'auto', display: 'flex', gap: '8px' }}>
