@@ -1,18 +1,12 @@
 import { Project, QuizQuestion, PlayerTelemetryEvent, Product } from '../types';
+import { resolveProductImageUrl, PRODUCT_PLACEHOLDER_IMAGE, handleImageError } from '../utils/imageUtils';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 const R2_PUBLIC_DOMAIN = 'https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev';
 
 function resolveCdnImageUrl(url: string | null | undefined): string {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const clean = url.replace(/^\/+/, '');
-  if (clean.startsWith('images/') || clean.startsWith('thumbnails/')) {
-    const filename = clean.split('/').pop();
-    return `${R2_PUBLIC_DOMAIN}/products/${filename}`;
-  }
-  return `${R2_PUBLIC_DOMAIN}/${clean}`;
+  return resolveProductImageUrl(url);
 }
 
 function normalizeProduct(p: any): Product {

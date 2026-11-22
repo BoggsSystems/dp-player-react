@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, X } from 'lucide-react';
 import { ProductGroup } from '../types';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 
 interface AllGroupsModalProps {
   isOpen: boolean;
@@ -95,9 +96,11 @@ export default function AllGroupsModal({
                 title={`Jump to ${pg.title || 'Moment'} at ${formatTime(pg.timestampSeconds)}`}
               >
                 <img
-                  src={thumb}
+                  src={resolveProductImageUrl(thumb)}
                   alt={pg.title || 'Product Group'}
+                  referrerPolicy="no-referrer"
                   className="product-group-thumbnail"
+                  onError={handleImageError}
                 />
                 <span className="product-group-badge">{timeLabel}</span>
                 <span className="product-group-title">

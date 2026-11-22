@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { ProductGroup, QuizQuestion } from '../types';
 import { api } from '../services/api';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCart } from '../context/CartContext';
 
 interface ShoppableDrawerProps {
@@ -399,8 +400,10 @@ export default function ShoppableDrawer({
                   {currentImg && (
                     <div style={{ position: 'relative', width: '100%', height: '170px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '10px', background: '#000' }}>
                       <img
-                        src={currentImg}
+                        src={resolveProductImageUrl(currentImg)}
                         alt={product.title}
+                        referrerPolicy="no-referrer"
+                        onError={handleImageError}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -513,7 +516,13 @@ export default function ShoppableDrawer({
                             transition: 'all 0.15s ease'
                           }}
                         >
-                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img 
+                            src={resolveProductImageUrl(img)} 
+                            alt="" 
+                            referrerPolicy="no-referrer"
+                            onError={handleImageError}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
                         </div>
                       ))}
                     </div>

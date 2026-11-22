@@ -4,6 +4,7 @@ import { ProductGroup, Product, Project } from '../types';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { ShareModal } from './ShareModal';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 
 interface PauseInspectModalProps {
   isOpen: boolean;
@@ -537,17 +538,11 @@ export default function PauseInspectModal({
                 >
                   <div className="product-template-image-container">
                     <img
-                      src={image}
+                      src={resolveProductImageUrl(image)}
                       alt={pt.title}
+                      referrerPolicy="no-referrer"
                       className="product-template-image"
-                      onError={(e) => {
-                        const img = e.currentTarget as HTMLImageElement;
-                        if (pt.imageUrls && pt.imageUrls.length > 1 && img.src !== pt.imageUrls[1]) {
-                          img.src = pt.imageUrls[1];
-                        } else {
-                          img.src = '/assets/images/placeholder-product.png';
-                        }
-                      }}
+                      onError={handleImageError}
                     />
                   </div>
                   <div className="product-template-content">
@@ -732,22 +727,16 @@ export default function PauseInspectModal({
             {/* Image Iterator Container */}
             <div className="image-iterator-container">
               <img
-                src={productImages[selectedImageIndex] || '/assets/images/shoppable-video-touch.svg'}
+                src={resolveProductImageUrl(productImages[selectedImageIndex])}
                 alt={selectedProduct.title}
                 className="product-main-image"
+                referrerPolicy="no-referrer"
                 onClick={() => {
                   if (productImages.length > 1) {
                     setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
                   }
                 }}
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement;
-                  if (selectedProduct.imageUrl && img.src !== selectedProduct.imageUrl) {
-                    img.src = selectedProduct.imageUrl;
-                  } else {
-                    img.src = '/assets/images/placeholder-product.png';
-                  }
-                }}
+                onError={handleImageError}
                 title={productImages.length > 1 ? 'Click to view next image' : undefined}
               />
 
@@ -789,13 +778,12 @@ export default function PauseInspectModal({
                 {productImages.map((url, idx) => (
                   <img
                     key={idx}
-                    src={url}
+                    src={resolveProductImageUrl(url)}
                     alt={`Thumbnail ${idx + 1}`}
+                    referrerPolicy="no-referrer"
                     className={`product-thumbnail ${selectedImageIndex === idx ? 'active' : ''}`}
                     onClick={() => setSelectedImageIndex(idx)}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = 'none';
-                    }}
+                    onError={handleImageError}
                   />
                 ))}
               </div>
@@ -820,7 +808,13 @@ export default function PauseInspectModal({
                     setViewState('ProductGroup');
                   }}
                 >
-                  <img src={thumb} alt={pg.title || 'Product Group'} className="product-group-thumbnail" />
+                  <img 
+                    src={resolveProductImageUrl(thumb)} 
+                    alt={pg.title || 'Product Group'} 
+                    referrerPolicy="no-referrer"
+                    className="product-group-thumbnail" 
+                    onError={handleImageError}
+                  />
                   <span className="product-group-badge">{formatTime(pg.timestampSeconds)}</span>
                   <span className="product-group-title">{pg.title || pg.name || `Moment ${idx + 1}`}</span>
                 </div>

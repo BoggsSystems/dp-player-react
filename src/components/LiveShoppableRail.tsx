@@ -14,6 +14,7 @@ import {
 import { ProductGroup, Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { api } from '../services/api';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 
 interface LiveShoppableRailProps {
   productGroup: ProductGroup | null;
@@ -238,18 +239,12 @@ export default function LiveShoppableRail({
                   title="Inspect Product Details"
                 >
                   <img
-                    src={product.imageUrl || '/assets/images/placeholder-product.png'}
+                    src={resolveProductImageUrl(product.imageUrl)}
                     alt={product.title}
+                    referrerPolicy="no-referrer"
                     className="live-rail-thumb"
                     loading="lazy"
-                    onError={(e) => {
-                      const img = e.currentTarget as HTMLImageElement;
-                      if (product.imageUrls && product.imageUrls.length > 1 && img.src !== product.imageUrls[1]) {
-                        img.src = product.imageUrls[1];
-                      } else {
-                        img.src = '/assets/images/placeholder-product.png';
-                      }
-                    }}
+                    onError={handleImageError}
                   />
                   <span className="live-rail-thumb-overlay">
                     <Eye size={16} />

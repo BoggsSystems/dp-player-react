@@ -14,6 +14,7 @@ import { Project, ProductGroup, ViewingMode, Product } from './types';
 import { api, OPPORTUNITY_OS_ABOUT_PROJECT, OPPORTUNITY_OS_JOB_APPLICATION_PROJECT } from './services/api';
 import { CartProvider, useCart } from './context/CartContext';
 import { ShopVideoLogo } from './components/ShopVideoLogo';
+import { resolveProductImageUrl, handleImageError } from './utils/imageUtils';
 
 function Player() {
   const { totalCount } = useCart();
@@ -726,17 +727,11 @@ function Player() {
                     <div className="shorts-desktop-card-top">
                       {prod.imageUrl && (
                         <img
-                          src={prod.imageUrl}
+                          src={resolveProductImageUrl(prod.imageUrl)}
                           alt={prod.title}
+                          referrerPolicy="no-referrer"
                           className="shorts-desktop-card-thumb"
-                          onError={(e) => {
-                            const img = e.currentTarget;
-                            const filename = (prod.imageUrl || '').split('/').pop();
-                            const cdnFallback = `https://pub-2af6e082fcb44c58add86361dad9d14b.r2.dev/products/${filename}`;
-                            if (img.src !== cdnFallback) {
-                              img.src = cdnFallback;
-                            }
-                          }}
+                          onError={handleImageError}
                         />
                       )}
                       <div className="shorts-desktop-card-info">

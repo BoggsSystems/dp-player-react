@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShoppingBag, X, ExternalLink, ChevronRight } from 'lucide-react';
 import { Product } from '../types';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 
 interface ShortsShoppableDrawerProps {
   product?: Product | null;
@@ -156,8 +157,10 @@ export default function ShortsShoppableDrawer({
           {currentProduct.imageUrl && (
             <img
               key={currentProduct.id}
-              src={currentProduct.imageUrl}
+              src={resolveProductImageUrl(currentProduct.imageUrl)}
               alt={currentProduct.title}
+              referrerPolicy="no-referrer"
+              onError={handleImageError}
               style={{
                 width: '44px',
                 height: '44px',
@@ -400,8 +403,10 @@ export default function ShortsShoppableDrawer({
                 >
                   {prod.imageUrl && (
                     <img
-                      src={prod.imageUrl}
+                      src={resolveProductImageUrl(prod.imageUrl)}
                       alt={prod.title}
+                      referrerPolicy="no-referrer"
+                      onError={handleImageError}
                       style={{
                         width: '48px',
                         height: '48px',
